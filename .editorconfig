@@ -1,0 +1,7 @@
+[*.hs]
+indent_style = space
+indent_size = 4
+
+[{models, routes}]
+indent_style = space
+indent_size = 4

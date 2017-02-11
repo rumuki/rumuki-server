@@ -1,0 +1,9 @@
+*.hi
+*.o
+*.sqlite3
+.hsenv*
+.DS_Store
+*.swp
+.stack-work
+Makefile
+dist

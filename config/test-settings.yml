@@ -1,0 +1,7 @@
+app-is-testing: true
+should-log-all: false
+database:
+  user: "rumuki"
+  password: "rumuki"
+  database: "rumuki"
+  port: 5433
