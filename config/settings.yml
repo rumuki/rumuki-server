@@ -1,0 +1,35 @@
+# Values formatted like "_env:ENV_VAR_NAME:default_value" can be overridden by the specified environment variable.
+# See https://github.com/yesodweb/yesod/wiki/Configuration#overriding-configuration-values-with-environment-variables
+
+# Defaults for `yesod devel` as a boilerplate
+host:                    "_env:HOST:*4" # any IPv4 host
+port:                    "_env:PORT:3000"
+app-root:                "_env:APP_ROOT:http://localhost:3000"
+ip-from-header:          "_env:IP_FROM_HEADER:true"
+
+app-is-testing: false
+
+smtp-host:               "_env:SMTP_HOST:localhost"
+smtp-user:               "_env:SMTP_USER"
+smtp-password:           "_env:SMTP_PASSWORD"
+smtp-port:               "_env:SMTP_PORT:25"
+
+notifications-host:      "_env:NOTIFICATIONS_HOST:notifications"
+notifications-port:      "_env:NOTIFICATIONS_PORT:80"
+
+recording-updatable-timeout: 300 # 5 minutes
+
+# Optional values with the following production defaults.
+# In development, they default to the inverse.
+#
+# development: false
+# detailed-logging: false
+# should-log-all:
+
+database:
+  user:     "_env:PG_USER:server"
+  password: "_env:PG_PASS:server"
+  host:     "_env:PG_HOST:localhost"
+  port:     "_env:PG_PORT:5432"
+  database: "_env:PG_DATABASE:rumuki"
+  poolsize: "_env:PG_POOLSIZE:10"

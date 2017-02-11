@@ -1,0 +1,9 @@
+Depends:
+Apply: |
+  CREATE TABLE "subscriber"("id" SERIAL8  PRIMARY KEY UNIQUE,"email" VARCHAR NOT NULL,"created" TIMESTAMP WITH TIME ZONE NULL DEFAULT now());
+  ALTER TABLE "subscriber" ADD CONSTRAINT "unique_subscriber" UNIQUE("email");
+  CREATE TABLE "feedback"("id" SERIAL8  PRIMARY KEY UNIQUE,"content" VARCHAR NOT NULL,"email" VARCHAR NULL,"created" TIMESTAMP WITH TIME ZONE NULL DEFAULT now());
+  CREATE TABLE "device"("id" SERIAL8  PRIMARY KEY UNIQUE,"token" VARCHAR NOT NULL,"key_fingerprint" BYTEA NOT NULL,"apn_token" BYTEA NULL);
+  ALTER TABLE "device" ADD CONSTRAINT "unique_device_token" UNIQUE("token");
+  ALTER TABLE "device" ADD CONSTRAINT "unique_device_token_fingerprint" UNIQUE("token","key_fingerprint");
+  CREATE TABLE "playback_grant"("id" SERIAL8  PRIMARY KEY UNIQUE,"recording_u_i_d" VARCHAR NOT NULL,"recipient_key_fingerprint" BYTEA NOT NULL,"key_cipher" BYTEA NOT NULL,"key_offset" INT8 NULL,"expires" TIMESTAMP WITH TIME ZONE NOT NULL);
