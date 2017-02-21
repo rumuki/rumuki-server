@@ -9,7 +9,6 @@ module Settings where
 
 import ClassyPrelude.Yesod hiding (throw)
 import Control.Exception           (throw)
-import Data.Easy
 import Data.Extension ()
 import Data.Aeson                  (Result (..), fromJSON, withObject, (.!=),
                                     (.:?), withScientific)
