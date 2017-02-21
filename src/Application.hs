@@ -167,7 +167,7 @@ removeExpiredPlaybackGrants :: App -> IO ()
 removeExpiredPlaybackGrants app = do
   now <- getCurrentTime
   pushLogStr (loggerSet . appLogger $ app) $ toLogStr ("Removing expired playback grants" :: ByteString)
-  _ <- runSqlPool (deleteWhere [ PlaybackGrantExpires >. now ]) (appConnPool app)
+  _ <- runSqlPool (deleteWhere [ PlaybackGrantExpires <. now ]) (appConnPool app)
   -- Every 30 minutes
   _ <- threadDelay $ 1000000 * 60 * 30
   removeExpiredPlaybackGrants app
