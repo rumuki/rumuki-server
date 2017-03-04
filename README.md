@@ -62,7 +62,7 @@ Content-Type: application/json
     { id: <int>
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
-    , expires :: <time>
+    , expires: <time>
     }
 }
 ```
@@ -81,7 +81,7 @@ Content-Type: application/json
     [{ id: <int>
      , recordingUID: <string>
      , recipientKeyFingerprint: <base64>
-     , expires :: <time>
+     , expires: <time>
     }]
 }
 ```
@@ -110,9 +110,9 @@ Content-Type: application/json
     { id: <int>
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
-    , expires :: <time>
-    , keyCipher :: <base64>
-    , keyOffset :: <int?>
+    , expires: <time>
+    , keyCipher: <base64>
+    , keyOffset: <int?>
     }
 }
 ```
