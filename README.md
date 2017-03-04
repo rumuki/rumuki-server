@@ -94,6 +94,28 @@ Content-Type: application/json
 HTTP/1.1 204 No Content
 ```
 
+### `/api/playback-grant/search`
+
+#### `GET`
+
+##### Request
+
+```javascript
+{ recordingUIDs: [<string>] }
+```
+
+##### Response
+
+```javascript
+{ playbackGrants:
+    [{ id: <int>
+     , recordingUID: <string>
+     , recipientKeyFingerprint: <base64>
+     , expires: <time>
+    }]
+}
+```
+
 ### `/api/recording/:recordingUID/playback-grant/:playbackGrantID`
 
 #### `GET`

@@ -46,6 +46,7 @@ import           Handler.Health
 import           Handler.Home
 import           Handler.PlaybackGrant
 import           Handler.PlaybackGrants
+import           Handler.PlaybackGrantsSearch
 import           Handler.Subscribers
 
 -- This line actually creates our YesodDispatch instance. It is the second half

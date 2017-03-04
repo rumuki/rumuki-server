@@ -6,3 +6,4 @@
 /api/feedback FeedbackR POST
 /api/recording/#Text/playback-grant PlaybackGrantsR POST GET DELETE
 /api/recording/#Text/playback-grant/#PlaybackGrantId PlaybackGrantR GET
+/api/playback-grant/search PlaybackGrantsSearchR GET
