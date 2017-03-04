@@ -15,5 +15,5 @@ getPlaybackGrantsSearchR :: Handler Value
 getPlaybackGrantsSearchR = do
   now <- liftIO getCurrentTime
   GETRequest uids <- requireJsonBody
-  grants <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids ] []
+  grants <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
   sendResponseStatus status200 $ object [ "playbackGrants" .= map ResponseView grants ]
