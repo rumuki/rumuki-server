@@ -168,3 +168,21 @@ HTTP/1.1 201 Created
     }
 }
 ```
+
+### `/api/screen-capture-notification`
+
+#### POST
+
+##### Request
+
+```javascript
+{ recordingUID: <string>
+, recipientKeyFingerprint: <base64>
+}
+```
+
+##### Response
+
+```http
+HTTP/1.1 201 Created
+```
