@@ -28,12 +28,14 @@ factoryPlaybackGrant :: (MonadIO m, SqlBackend ~ backend)
 
 factoryPlaybackGrant (Entity _ rd) transform = do
   key <- liftIO $ getEntropy 32
-  expires <- liftIO $ addUTCTime (60 * 60 * 24) <$> getCurrentTime
+  now <- liftIO getCurrentTime
+  let expires = addUTCTime (60 * 60 * 24) now
   let playbackGrant = transform PlaybackGrant { playbackGrantRecordingUID = "recording123"
                                               , playbackGrantRecipientKeyFingerprint = deviceKeyFingerprint rd
                                               , playbackGrantKeyCipher = key
                                               , playbackGrantKeyOffset = Nothing
                                               , playbackGrantExpires = expires
+                                              , playbackGrantCreated = now
                                               }
   pgid <- insert playbackGrant
   return $ Entity pgid playbackGrant

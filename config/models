@@ -35,4 +35,6 @@ PlaybackGrant json
     keyOffset Int Maybe
     -- | When the key expires. Expiry date should be calculated by the Key Server.
     expires UTCTime
+    -- | When the playback grant was created.
+    created UTCTime
   deriving Show

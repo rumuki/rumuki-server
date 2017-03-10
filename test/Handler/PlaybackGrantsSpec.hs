@@ -48,7 +48,8 @@ testGet = describe "getPlaybackGrantsR" $ do
                 [ ("id", Bool True)
                 , ("recordingUID", Bool True)
                 , ("recipientKeyFingerprint", Bool True)
-                , ("expires", Bool True) ]
+                , ("expires", Bool True)
+                , ("created", Bool True) ]
         in null (H.toList d)
 
     it "does not return grants that have expired" $ do

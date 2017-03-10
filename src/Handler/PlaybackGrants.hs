@@ -24,11 +24,13 @@ postPlaybackGrantsR recordingUID = do
   req <- requireJsonBody
   now <- liftIO getCurrentTime
   let expiry = addUTCTime (60 * 60 * 24 * 7) now
-  let pg = PlaybackGrant recordingUID
+  let pg = PlaybackGrant
+           recordingUID
            (recipientKeyFingerprint req)
            (keyCipher req)
            (keyOffset req)
            expiry
+           now
 
   -- Try and insert
   pgid <- fromMaybeM (error "Could not create playback grant") $ runDB $ insertUnique pg

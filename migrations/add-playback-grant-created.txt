@@ -1,0 +1,10 @@
+Depends: schema
+Apply: |
+  ALTER TABLE "playback_grant"
+  ADD COLUMN "created" TIMESTAMP WITH TIME ZONE NOT NULL
+  DEFAULT '2000-01-01';
+
+  UPDATE "playback_grant"
+  SET created = expires - INTERVAL '7 days';
+
+  ALTER TABLE "playback_grant" ALTER COLUMN "created" DROP DEFAULT;
