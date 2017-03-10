@@ -13,9 +13,11 @@ factoryDevice :: (MonadIO m, SqlBackend ~ backend)
                -> ReaderT backend m (Maybe (Entity Device))
 
 factoryDevice transform = do
+  now <- liftIO getCurrentTime
   let device = transform Device { deviceToken    = "abcd123-123123123-123123123-123123123"
                                 , deviceApnToken = Just "740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad"
-                                , deviceKeyFingerprint = "ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234" }
+                                , deviceKeyFingerprint = "ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234"
+                                , deviceUpdated = Just now }
   uid <- insert device
   return $ Just $ Entity uid device
 

@@ -1,6 +1,7 @@
 module Handler.Devices where
 
-import           Data.Aeson (withObject, (.:?))
+import           Data.Aeson      (withObject, (.:?))
+import           Data.Time.Clock (getCurrentTime)
 import           Import
 
 data CreateDeviceRequest = CreateDeviceRequest Text ByteString (Maybe ByteString)
@@ -14,13 +15,14 @@ instance FromJSON CreateDeviceRequest where
 
 postDevicesR :: Handler Value
 postDevicesR = do
+  now <- liftIO getCurrentTime
   CreateDeviceRequest
     deviceToken
     keyFingerprint
     mApnToken <- requireJsonBody
   _ <- runDB $ upsertBy
     (UniqueDeviceToken deviceToken)
-    (Device deviceToken keyFingerprint mApnToken) []
+    (Device deviceToken keyFingerprint mApnToken (Just now)) []
   sendResponseStatus status201 ()
 
 data DeleteDeviceRequest = DeleteDeviceRequest Text [Text]
