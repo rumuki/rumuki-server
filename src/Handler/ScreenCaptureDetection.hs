@@ -1,8 +1,7 @@
-module Handler.ScreenCaptureNotification (
-  postScreenCaptureNotificationR) where
+module Handler.ScreenCaptureDetection (
+  postScreenCaptureDetectionR) where
 
 import           Data.Aeson
-import           Data.Time.Clock        (getCurrentTime)
 import           Import
 import           Model.Device
 import           Model.PushNotification
@@ -15,8 +14,8 @@ instance FromJSON POSTRequest where
     <$> o .: "recipientKeyFingerprint"
     <*> o .: "recordingUID"
 
-postScreenCaptureNotificationR :: Handler Value
-postScreenCaptureNotificationR = do
+postScreenCaptureDetectionR :: Handler Value
+postScreenCaptureDetectionR = do
   (POSTRequest keyFingerprint recordingUID) <- requireJsonBody
   devices <- runDB $ selectList [DeviceKeyFingerprint ==. keyFingerprint] []
   _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do

@@ -191,7 +191,7 @@ HTTP/1.1 201 Created
 }
 ```
 
-### `/api/screen-capture-notification`
+### `/api/screen-capture-detection`
 
 #### POST
 

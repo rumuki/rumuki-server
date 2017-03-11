@@ -23,7 +23,7 @@ library
                      Handler.Home
                      Handler.PlaybackGrant
                      Handler.PlaybackGrants
-                     Handler.ScreenCaptureNotification
+                     Handler.ScreenCaptureDetection
                      Handler.PlaybackGrantsSearch
                      Handler.Subscribers
                      Import

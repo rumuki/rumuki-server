@@ -6,5 +6,5 @@
 /api/feedback FeedbackR POST
 /api/recording/#Text/playback-grant PlaybackGrantsR POST GET DELETE
 /api/recording/#Text/playback-grant/#PlaybackGrantId PlaybackGrantR GET
-/api/screen-capture-notification ScreenCaptureNotificationR POST
+/api/screen-capture-detection ScreenCaptureDetectionR POST
 /api/playback-grant/search PlaybackGrantsSearchR GET
