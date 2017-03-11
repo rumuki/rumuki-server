@@ -62,7 +62,7 @@ Content-Type: application/json
     { id: <int>
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
-    , expires :: <time>
+    , expires: <time>
     }
 }
 ```
@@ -81,7 +81,7 @@ Content-Type: application/json
     [{ id: <int>
      , recordingUID: <string>
      , recipientKeyFingerprint: <base64>
-     , expires :: <time>
+     , expires: <time>
     }]
 }
 ```
@@ -92,6 +92,28 @@ Content-Type: application/json
 
 ```http
 HTTP/1.1 204 No Content
+```
+
+### `/api/playback-grant/search`
+
+#### `GET`
+
+##### Request
+
+```javascript
+{ recordingUIDs: [<string>] }
+```
+
+##### Response
+
+```javascript
+{ playbackGrants:
+    [{ id: <int>
+     , recordingUID: <string>
+     , recipientKeyFingerprint: <base64>
+     , expires: <time>
+    }]
+}
 ```
 
 ### `/api/recording/:recordingUID/playback-grant/:playbackGrantID`
@@ -110,9 +132,9 @@ Content-Type: application/json
     { id: <int>
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
-    , expires :: <time>
-    , keyCipher :: <base64>
-    , keyOffset :: <int?>
+    , expires: <time>
+    , keyCipher: <base64>
+    , keyOffset: <int?>
     }
 }
 ```
