@@ -62,7 +62,8 @@ Content-Type: application/json
     { id: <int>
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
-    , expires :: <time>
+    , expires: <time>
+    , created: <time>
     }
 }
 ```
@@ -81,7 +82,8 @@ Content-Type: application/json
     [{ id: <int>
      , recordingUID: <string>
      , recipientKeyFingerprint: <base64>
-     , expires :: <time>
+     , expires: <time>
+     , created: <time>
     }]
 }
 ```
@@ -92,6 +94,34 @@ Content-Type: application/json
 
 ```http
 HTTP/1.1 204 No Content
+```
+
+### `/api/device/update`
+
+#### `POST`
+
+##### Request
+
+```javascript
+{ recordingUIDs: [<string>]
+, deviceKeyFingerprint: <base64> }
+```
+
+##### Response
+
+```javascript
+{ playbackGrants:
+    [{ id: <int>
+     , recordingUID: <string>
+     , recipientKeyFingerprint: <base64>
+     , expires: <time>
+     , created: <time>
+    }]
+, screenCaptureDetections:
+    [{ affectedDeviceKeyFingerprint: <base64>
+    ,  recordingUID: <string>
+    }]
+}
 ```
 
 ### `/api/recording/:recordingUID/playback-grant/:playbackGrantID`
@@ -110,9 +140,10 @@ Content-Type: application/json
     { id: <int>
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
-    , expires :: <time>
-    , keyCipher :: <base64>
-    , keyOffset :: <int?>
+    , expires: <time>
+    , created: <time>
+    , keyCipher: <base64>
+    , keyOffset: <int?>
     }
 }
 ```
@@ -167,4 +198,22 @@ HTTP/1.1 201 Created
     , created: <time>
     }
 }
+```
+
+### `/api/screen-capture-detection`
+
+#### POST
+
+##### Request
+
+```javascript
+{ recordingUID: <string>
+, recipientKeyFingerprint: <base64>
+}
+```
+
+##### Response
+
+```http
+HTTP/1.1 201 Created
 ```

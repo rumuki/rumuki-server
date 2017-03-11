@@ -1,0 +1,3 @@
+Depends: schema
+Apply: |
+  ALTER TABLE "device" ADD COLUMN "updated" TIMESTAMP WITH TIME ZONE NULL;

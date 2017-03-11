@@ -3,6 +3,7 @@ module Handler.PlaybackGrants where
 import           Data.Aeson
 import           Data.Time.Clock
 import           Import
+import           Model.Device
 import           Model.PlaybackGrant    ()
 import           Model.PushNotification
 
@@ -22,19 +23,26 @@ instance FromJSON PlaybackGrantsRequest where
 postPlaybackGrantsR :: Text -> Handler Value
 postPlaybackGrantsR recordingUID = do
   req <- requireJsonBody
-  expiry <- liftIO $ addUTCTime (60 * 60 * 24 * 7) <$> getCurrentTime
-  let pg = PlaybackGrant recordingUID
+  now <- liftIO getCurrentTime
+  let expiry = addUTCTime (60 * 60 * 24 * 7) now
+  let pg = PlaybackGrant
+           recordingUID
            (recipientKeyFingerprint req)
            (keyCipher req)
            (keyOffset req)
            expiry
+           now
 
   -- Try and insert
   pgid <- fromMaybeM (error "Could not create playback grant") $ runDB $ insertUnique pg
+
   -- If a device for the given fingerprint exists, fire a push notification
   devices <- runDB $ selectList [DeviceKeyFingerprint ==. recipientKeyFingerprint req] []
-  _ <- sequence $ map (forkAndSendPushNotificationI MsgNewPlaybackGrantReceived . entityVal) devices
-  sendResponseStatus status201 $ object ["playbackGrant" .= (ResponseView (Entity pgid pg))]
+  _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
+    outstandingGrantsCount <- countUnseenPlaybackGrants device
+    forkAndSendPushNotificationI MsgNewPlaybackGrantReceived outstandingGrantsCount device
+
+  sendResponseStatus status201 $ object ["playbackGrant" .= (Entity pgid pg)]
 
 getPlaybackGrantsR :: Text -> Handler Value
 getPlaybackGrantsR recordingUid = do
@@ -44,8 +52,7 @@ getPlaybackGrantsR recordingUid = do
             , PlaybackGrantExpires >. now ]
             []
 
-  sendResponseStatus status200 $ object [
-    "playbackGrants" .= map ResponseView grants ]
+  sendResponseStatus status200 $ object [ "playbackGrants" .= grants ]
 
 deletePlaybackGrantsR :: Text -> Handler Value
 deletePlaybackGrantsR recordingUid = do

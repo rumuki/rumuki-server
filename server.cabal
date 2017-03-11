@@ -23,6 +23,8 @@ library
                      Handler.Home
                      Handler.PlaybackGrant
                      Handler.PlaybackGrants
+                     Handler.ScreenCaptureDetections
+                     Handler.DeviceUpdate
                      Handler.Subscribers
                      Import
                      Import.NoFoundation
@@ -159,6 +161,8 @@ test-suite test
     other-modules: Handler.PlaybackGrantSpec
                  , Handler.PlaybackGrantsSpec
                  , Handler.DevicesSpec
+                 , Handler.DeviceUpdateSpec
+                 , Handler.ScreenCaptureDetectionsSpec
                  , Handler.SubscribersSpec
                  , TestExtension
                  , TestFactory

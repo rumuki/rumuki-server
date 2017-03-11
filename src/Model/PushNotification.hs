@@ -8,50 +8,56 @@ import Control.Concurrent (forkIO)
 
 data PushNotificationPlatform = APNS | GCM
 
-data PushNotification = PushNotification { notificationToken :: Text
-                                         , notificationPlatform :: PushNotificationPlatform
-                                         , notificationMessage :: Text }
-
-instance ToJSON PushNotification where
-  toJSON (PushNotification { notificationToken = t
-                           , notificationPlatform = p
-                           , notificationMessage = m }) =
-    object $ [ "token"    .= [t]
-             , "platform" .= p
-             , "message"  .= m ]
-
 instance ToJSON PushNotificationPlatform where
   toJSON APNS = Number 1
   toJSON GCM  = Number 2
 
+data PushNotification = PushNotification { notificationToken            :: Text
+                                         , notificationPlatform         :: PushNotificationPlatform
+                                         , notificationMessage          :: Text
+                                         , notificationContentAvailable :: Bool
+                                         , notificationBadge            :: Int }
+
+instance ToJSON PushNotification where
+  toJSON n = object $
+    [ "token"             .= [notificationToken n]
+    , "platform"          .= notificationPlatform n
+    , "message"           .= notificationMessage n
+    , "content_available" .= notificationContentAvailable n
+    , "badge"             .= notificationBadge n ]
+
 -- | Make push notifications for a device based on their apn token.
 makeNotificationsFromDevice :: Device
                             -> Text -- ^ The notification message
+                            -> Int  -- ^ Number of items to show on the badge
                             -> [ PushNotification ] -- ^ A list of possible notifications
 
-makeNotificationsFromDevice u m = maybe [] (:[]) $ do
+makeNotificationsFromDevice u m b = maybe [] (:[]) $ do
   token' <- deviceApnToken u
   let token = decodeUtf8 . toStrict . toLazyByteString . byteStringHex $ token'
   return PushNotification { notificationToken = token
                           , notificationPlatform = APNS
-                          , notificationMessage = m }
+                          , notificationMessage = m
+                          , notificationContentAvailable = b > 0
+                          , notificationBadge = b }
 
 -- | This will send a message to the given device as a push notification
 -- the response is a boolean indicating whether or not the attempt was
 -- successful.
 sendPushNotification :: AppSettings
                      -> Device -- ^ Device to attempt sending the notification to
-                     -> Text -- ^ The message to send
+                     -> Text   -- ^ The message to send
+                     -> Int    -- ^ Number of items to show on the badge
                      -> IO Bool
 
-sendPushNotification settings u m = do
+sendPushNotification settings u m b = do
   let host = appNotificationsHost settings
       port = appNotificationsPort settings
       request = setRequestHost (encodeUtf8 . T.pack $ host)
               $ setRequestPort port
               $ setRequestPath "/push"
               $ setRequestMethod "POST"
-              $ setRequestBodyJSON (object [ "notifications" .= makeNotificationsFromDevice u m ])
+              $ setRequestBodyJSON (object [ "notifications" .= makeNotificationsFromDevice u m b ])
               $ defaultRequest
 
   response <- httpLBS request
@@ -59,9 +65,9 @@ sendPushNotification settings u m = do
 
 -- | Given a handler context, this will fire-and-forget a
 -- push notification inside a new thread.
-forkAndSendPushNotification :: Text -> Device -> Handler ()
+forkAndSendPushNotification :: Text -> Int -> Device -> Handler ()
 
-forkAndSendPushNotification msg recipient = do
+forkAndSendPushNotification msg badgeCount recipient = do
   runInnerHandler <- handlerToIO
   void $ liftIO $ forkIO $ runInnerHandler $ do
     settings <- appSettings <$> getYesod
@@ -70,10 +76,10 @@ forkAndSendPushNotification msg recipient = do
         h = case isTesting of
           True -> const (return ())
           False -> $(logWarn) . fromString . show
-    handle h $ liftIO $ sendPushNotification settings recipient msg >> return ()
+    handle h $ liftIO $ sendPushNotification settings recipient msg badgeCount >> return ()
 
-forkAndSendPushNotificationI :: AppMessage -> Device -> Handler ()
+forkAndSendPushNotificationI :: AppMessage -> Int -> Device -> Handler ()
 
-forkAndSendPushNotificationI msgi recipient = do
+forkAndSendPushNotificationI msgi badgeCount recipient = do
   msg <- getMessageRender >>= (\mr -> return $ mr msgi)
-  forkAndSendPushNotification msg recipient
+  forkAndSendPushNotification msg badgeCount recipient

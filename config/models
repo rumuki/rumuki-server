@@ -10,20 +10,27 @@ Feedback json
     created UTCTime Maybe default=now()
   deriving Show
 
-Device json
+ScreenCaptureDetection json
+    affectedDeviceKeyFingerprint ByteString
+    recordingUID Text
+    UniqueScreenCaptureDetection affectedDeviceKeyFingerprint recordingUID
+  deriving Show
+
+Device
     -- | This is used as a means of authenticating the update of a device APN token.
     token Text
     -- | The BLAKE2 fingerprint of the device public key.
     keyFingerprint ByteString
     -- | Used to identify the device with Apple Push Notification Services.
     apnToken ByteString Maybe
+    updated UTCTime Maybe
     UniqueDeviceToken token
     UniqueDeviceTokenFingerprint token keyFingerprint
   deriving Typeable Show
 
 -- | An entry that allows access to a key once. PlaybackGrants should be
 -- removed as soon as a device accesses the grant, or when the grant expires.
-PlaybackGrant json
+PlaybackGrant
     -- | The id of the recording
     recordingUID Text
     -- | The BLAKE2 fingerprint of the recipient public key.
@@ -34,4 +41,6 @@ PlaybackGrant json
     keyOffset Int Maybe
     -- | When the key expires. Expiry date should be calculated by the Key Server.
     expires UTCTime
+    -- | When the playback grant was created.
+    created UTCTime default=now()
   deriving Show
