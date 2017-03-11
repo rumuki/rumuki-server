@@ -63,6 +63,7 @@ Content-Type: application/json
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
     , expires: <time>
+    , created: <time>
     }
 }
 ```
@@ -82,6 +83,7 @@ Content-Type: application/json
      , recordingUID: <string>
      , recipientKeyFingerprint: <base64>
      , expires: <time>
+     , created: <time>
     }]
 }
 ```
@@ -113,6 +115,7 @@ HTTP/1.1 204 No Content
      , recordingUID: <string>
      , recipientKeyFingerprint: <base64>
      , expires: <time>
+     , created: <time>
     }]
 , screenCaptureDetections:
     [{ affectedDeviceKeyFingerprint: <base64>
@@ -138,6 +141,7 @@ Content-Type: application/json
     , recordingUID: <string>
     , recipientKeyFingerprint: <base64>
     , expires: <time>
+    , created: <time>
     , keyCipher: <base64>
     , keyOffset: <int?>
     }

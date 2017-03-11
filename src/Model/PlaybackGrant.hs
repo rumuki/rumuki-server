@@ -2,19 +2,17 @@ module Model.PlaybackGrant
        (consumeGrant)
        where
 
+import Data.Aeson
 import qualified Data.HashMap.Strict as H
 import           Import
 
-instance FromJSON (RequestView PlaybackGrant) where
-  parseJSON v = (return . RequestView) =<< parseJSON v
-
-instance ToJSON (ResponseView (Entity PlaybackGrant)) where
-  toJSON (ResponseView (Entity pgid pg)) = Object
-                                           $ H.insert "id" (toJSON pgid)
-                                           $ H.delete "keyCipher"
-                                           $ H.delete "keyOffset"
-                                           o
-    where Object o = toJSON pg
+instance ToJSON (Entity PlaybackGrant) where
+  toJSON (Entity pgid pg) = object [ "id" .= pgid
+                                   , "recordingUID" .= playbackGrantRecordingUID pg
+                                   , "recipientKeyFingerprint" .= playbackGrantRecipientKeyFingerprint pg
+                                   , "expires" .= playbackGrantExpires pg
+                                   , "created" .= playbackGrantCreated pg
+                                   ]
 
 newtype ConsumedGrant = ConsumedGrant {
   getPlaybackGrant :: Entity PlaybackGrant }
@@ -23,11 +21,12 @@ newtype ConsumedGrant = ConsumedGrant {
 -- When this type is used, we should assume that the playback
 -- grant is removed straight after.
 instance ToJSON ConsumedGrant where
-  toJSON cg = Object
-              $ H.insert "id" (toJSON gid)
+  toJSON cg = Object $
+              H.insert "keyCipher" (toJSON $ playbackGrantKeyCipher g) $
+              H.insert "keyOffset" (toJSON $ playbackGrantKeyOffset g) $
               o
-    where Entity gid g = getPlaybackGrant cg
-          Object o     = toJSON g
+    where grant@(Entity _ g) = getPlaybackGrant cg
+          Object o = toJSON grant
 
 -- | The only way to create a consumed playback grant representation.
 -- ensures that whenever a representation is created, the playback

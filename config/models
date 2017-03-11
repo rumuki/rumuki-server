@@ -16,7 +16,7 @@ ScreenCaptureDetection json
     UniqueScreenCaptureDetection affectedDeviceKeyFingerprint recordingUID
   deriving Show
 
-Device json
+Device
     -- | This is used as a means of authenticating the update of a device APN token.
     token Text
     -- | The BLAKE2 fingerprint of the device public key.
@@ -30,7 +30,7 @@ Device json
 
 -- | An entry that allows access to a key once. PlaybackGrants should be
 -- removed as soon as a device accesses the grant, or when the grant expires.
-PlaybackGrant json
+PlaybackGrant
     -- | The id of the recording
     recordingUID Text
     -- | The BLAKE2 fingerprint of the recipient public key.

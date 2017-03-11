@@ -42,7 +42,7 @@ postPlaybackGrantsR recordingUID = do
     outstandingGrantsCount <- countUnseenPlaybackGrants device
     forkAndSendPushNotificationI MsgNewPlaybackGrantReceived outstandingGrantsCount device
 
-  sendResponseStatus status201 $ object ["playbackGrant" .= (ResponseView (Entity pgid pg))]
+  sendResponseStatus status201 $ object ["playbackGrant" .= (Entity pgid pg)]
 
 getPlaybackGrantsR :: Text -> Handler Value
 getPlaybackGrantsR recordingUid = do
@@ -52,8 +52,7 @@ getPlaybackGrantsR recordingUid = do
             , PlaybackGrantExpires >. now ]
             []
 
-  sendResponseStatus status200 $ object [
-    "playbackGrants" .= map ResponseView grants ]
+  sendResponseStatus status200 $ object [ "playbackGrants" .= grants ]
 
 deletePlaybackGrantsR :: Text -> Handler Value
 deletePlaybackGrantsR recordingUid = do
