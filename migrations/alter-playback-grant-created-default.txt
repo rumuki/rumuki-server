@@ -1,0 +1,3 @@
+Depends: add-playback-grant-created schema
+Apply: |
+  ALTER TABLE "playback_grant" ALTER COLUMN "created" SET DEFAULT now();

@@ -42,5 +42,5 @@ PlaybackGrant
     -- | When the key expires. Expiry date should be calculated by the Key Server.
     expires UTCTime
     -- | When the playback grant was created.
-    created UTCTime
+    created UTCTime default=now()
   deriving Show
