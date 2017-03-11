@@ -10,6 +10,12 @@ Feedback json
     created UTCTime Maybe default=now()
   deriving Show
 
+ScreenCaptureDetection json
+    affectedDeviceKeyFingerprint ByteString
+    recordingUID Text
+    UniqueScreenCaptureDetection affectedDeviceKeyFingerprint recordingUID
+  deriving Show
+
 Device json
     -- | This is used as a means of authenticating the update of a device APN token.
     token Text

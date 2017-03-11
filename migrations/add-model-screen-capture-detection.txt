@@ -1,0 +1,9 @@
+Depends: schema
+Apply: |
+  CREATE TABLE "screen_capture_detection" (
+         "id" SERIAL8  PRIMARY KEY UNIQUE,
+         "affected_device_key_fingerprint" BYTEA NOT NULL,
+         "recording_u_i_d" VARCHAR NOT NULL);
+  ALTER TABLE "screen_capture_detection"
+  ADD CONSTRAINT "unique_screen_capture_detection"
+  UNIQUE("affected_device_key_fingerprint","recording_u_i_d");
