@@ -17,7 +17,7 @@ getDeviceUpdateR :: Handler Value
 getDeviceUpdateR = do
   now <- liftIO getCurrentTime
   GETRequest uids keyFingerprint <- requireJsonBody
-  detections <- runDB $ selectList [ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint] []
+  detections <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
   grants <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
   sendResponseStatus status200 $ object [ "playbackGrants" .= map ResponseView grants
                                         , "screenCaptureDetections" .= detections ]
