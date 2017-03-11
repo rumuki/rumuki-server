@@ -3,6 +3,7 @@ module Handler.PlaybackGrants where
 import           Data.Aeson
 import           Data.Time.Clock
 import           Import
+import           Model.Device
 import           Model.PlaybackGrant    ()
 import           Model.PushNotification
 
@@ -38,8 +39,7 @@ postPlaybackGrantsR recordingUID = do
   -- If a device for the given fingerprint exists, fire a push notification
   devices <- runDB $ selectList [DeviceKeyFingerprint ==. recipientKeyFingerprint req] []
   _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
-    outstandingGrantsCount <- runDB $ count [ PlaybackGrantExpires >. now
-                                            , PlaybackGrantRecipientKeyFingerprint ==. deviceKeyFingerprint device ]
+    outstandingGrantsCount <- countUnseenPlaybackGrants device
     forkAndSendPushNotificationI MsgNewPlaybackGrantReceived outstandingGrantsCount device
 
   sendResponseStatus status201 $ object ["playbackGrant" .= (ResponseView (Entity pgid pg))]
