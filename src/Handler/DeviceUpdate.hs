@@ -1,4 +1,4 @@
-module Handler.DeviceUpdate (getDeviceUpdateR) where
+module Handler.DeviceUpdate (postDeviceUpdateR) where
 
 import           Data.Aeson
 import           Data.Time.Clock     (getCurrentTime)
@@ -13,8 +13,8 @@ instance FromJSON GETRequest where
     <$> o .: "recordingUIDs"
     <*> o .: "deviceKeyFingerprint"
 
-getDeviceUpdateR :: Handler Value
-getDeviceUpdateR = do
+postDeviceUpdateR :: Handler Value
+postDeviceUpdateR = do
   now <- liftIO getCurrentTime
   GETRequest uids keyFingerprint <- requireJsonBody
   detections <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []

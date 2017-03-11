@@ -9,7 +9,7 @@ import           TestImport
 spec :: Spec
 spec = withApp $ do
 
-  describe "getDeviceUpdateR" $ do
+  describe "postDeviceUpdateR" $ do
 
     it "does not return the key cipher" $ do
       device <- makeDevice
@@ -46,6 +46,6 @@ spec = withApp $ do
     makeGrant device = runDB $ factoryPlaybackGrant device $ \g -> g { playbackGrantRecordingUID = recordingUID }
     makeRequest (Entity _ d) = requestJSON $ do
       setUrl $ DeviceUpdateR
-      setMethod "GET"
+      setMethod "POST"
       setRequestBody $ encode $ object [ "recordingUIDs" .= ([recordingUID] :: [Text])
                                        , "deviceKeyFingerprint" .= deviceKeyFingerprint d ]
