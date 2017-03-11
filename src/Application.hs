@@ -46,7 +46,7 @@ import           Handler.Health
 import           Handler.Home
 import           Handler.PlaybackGrant
 import           Handler.PlaybackGrants
-import           Handler.PlaybackGrantsSearch
+import           Handler.DeviceUpdate
 import           Handler.Subscribers
 import           Handler.ScreenCaptureDetections
 

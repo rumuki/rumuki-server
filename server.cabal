@@ -24,7 +24,7 @@ library
                      Handler.PlaybackGrant
                      Handler.PlaybackGrants
                      Handler.ScreenCaptureDetections
-                     Handler.PlaybackGrantsSearch
+                     Handler.DeviceUpdate
                      Handler.Subscribers
                      Import
                      Import.NoFoundation

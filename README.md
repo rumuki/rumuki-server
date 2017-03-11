@@ -94,14 +94,15 @@ Content-Type: application/json
 HTTP/1.1 204 No Content
 ```
 
-### `/api/playback-grant/search`
+### `/api/device/update`
 
 #### `GET`
 
 ##### Request
 
 ```javascript
-{ recordingUIDs: [<string>] }
+{ recordingUIDs: [<string>]
+, deviceKeyFingerprint: <base64> }
 ```
 
 ##### Response
@@ -112,6 +113,10 @@ HTTP/1.1 204 No Content
      , recordingUID: <string>
      , recipientKeyFingerprint: <base64>
      , expires: <time>
+    }]
+, screenCaptureDetections:
+    [{ affectedDeviceKeyFingerprint: <base64>
+    ,  recordingUID: <string>
     }]
 }
 ```
