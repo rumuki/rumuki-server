@@ -24,6 +24,7 @@ Device
     -- | Used to identify the device with Apple Push Notification Services.
     apnToken ByteString Maybe
     updated UTCTime Maybe
+    preferredLocalization Text Maybe
     UniqueDeviceToken token
     UniqueDeviceTokenFingerprint token keyFingerprint
   deriving Typeable Show

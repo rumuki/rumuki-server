@@ -1,0 +1,3 @@
+Depends: add-device-updated schema
+Apply: |
+  ALTER TABLE "device" ADD COLUMN "preferred_localization" VARCHAR NULL;

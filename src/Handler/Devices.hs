@@ -4,14 +4,19 @@ import           Data.Aeson      (withObject, (.:?))
 import           Data.Time.Clock (getCurrentTime)
 import           Import
 
-data CreateDeviceRequest = CreateDeviceRequest Text ByteString (Maybe ByteString)
+data CreateDeviceRequest = CreateDeviceRequest
+  Text
+  ByteString
+  (Maybe ByteString)
+  (Maybe Text)
 
 instance FromJSON CreateDeviceRequest where
   parseJSON = withObject "device request" $
     \o -> CreateDeviceRequest
           <$> o .:  "deviceToken"
-          <*> o .: "keyFingerprint"
+          <*> o .:  "keyFingerprint"
           <*> o .:? "apnDeviceToken"
+          <*> o .:? "preferredLocalization"
 
 postDevicesR :: Handler Value
 postDevicesR = do
@@ -19,10 +24,11 @@ postDevicesR = do
   CreateDeviceRequest
     deviceToken
     keyFingerprint
-    mApnToken <- requireJsonBody
+    mApnToken
+    mPreferredLocalization <- requireJsonBody
   _ <- runDB $ upsertBy
     (UniqueDeviceToken deviceToken)
-    (Device deviceToken keyFingerprint mApnToken (Just now)) []
+    (Device deviceToken keyFingerprint mApnToken (Just now) mPreferredLocalization) []
   sendResponseStatus status201 ()
 
 data DeleteDeviceRequest = DeleteDeviceRequest Text [Text]

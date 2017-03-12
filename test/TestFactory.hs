@@ -17,7 +17,8 @@ factoryDevice transform = do
   let device = transform Device { deviceToken    = "abcd123-123123123-123123123-123123123"
                                 , deviceApnToken = Just "740f4707bebcf74f9b7c25d48e3358945f6aa01da5ddb387462c7eaf61bb78ad"
                                 , deviceKeyFingerprint = "ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234ABCD1234"
-                                , deviceUpdated = Just now }
+                                , deviceUpdated = Just now
+                                , devicePreferredLocalization = Just "en" }
   uid <- insert device
   return $ Just $ Entity uid device
 
