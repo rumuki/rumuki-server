@@ -25,6 +25,13 @@ image: UPGRADE_COMMAND := sed -i '' 's/rumuki-server:.*"/rumuki-server:$(DOCKER_
 image:
 	@$(UPLOAD_IMAGE)
 
+.PHONY: gc-image
+gc-image: DOCKER_REPO_NAME := rumuki-server
+gc-image: DOCKER_IMAGE_VERSION := git-$(shell git rev-parse HEAD | cut -c1-9)
+gc-image: UPGRADE_COMMAND := sed -i '' 's/rumuki-server:.*/rumuki-server:$(DOCKER_IMAGE_VERSION)/g' ../$(SERVER_CONFIG_FILE)
+gc-image:
+	@$(UPLOAD_IMAGE_GCR_AND_UPGRADE)
+
 # Use an intermediate docker container to build a binary for linux
 dist/x86_64-linux/server: server.cabal stack.yaml $(SRC_FILES)
 	$(call LOG, Building, binary)
