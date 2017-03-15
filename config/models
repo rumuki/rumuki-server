@@ -1,6 +1,7 @@
 Subscriber json
     email Text
     created UTCTime Maybe default=now()
+    source Text Maybe
     UniqueSubscriber email
   deriving Typeable Show
 

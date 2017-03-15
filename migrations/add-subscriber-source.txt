@@ -1,0 +1,3 @@
+Depends: schema
+Apply: |
+  ALTER TABLE "subscriber" ADD COLUMN "source" VARCHAR NULL;
