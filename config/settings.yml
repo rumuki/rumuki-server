@@ -9,11 +9,6 @@ ip-from-header:          "_env:IP_FROM_HEADER:true"
 
 app-is-testing: false
 
-smtp-host:               "_env:SMTP_HOST:localhost"
-smtp-user:               "_env:SMTP_USER"
-smtp-password:           "_env:SMTP_PASSWORD"
-smtp-port:               "_env:SMTP_PORT:25"
-
 notifications-host:      "_env:NOTIFICATIONS_HOST:notifications"
 notifications-port:      "_env:NOTIFICATIONS_PORT:80"
 

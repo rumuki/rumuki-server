@@ -44,11 +44,6 @@ data AppSettings = AppSettings
     , appSkipCombining          :: Bool
     -- ^ Perform no stylesheet/script combining
 
-    , appSmtpHost               :: Maybe String
-    , appSmtpUser               :: Maybe String
-    , appSmtpPassword           :: Maybe String
-    , appSmtpPort               :: PortNumber
-
     , appNotificationsHost      :: String
     , appNotificationsPort      :: Int
 
@@ -72,11 +67,6 @@ instance FromJSON AppSettings where
         appDetailedRequestLogging <- o .:? "detailed-logging" .!= defaultDev
         appShouldLogAll           <- o .:? "should-log-all"   .!= defaultDev
         appSkipCombining          <- o .:? "skip-combining"   .!= defaultDev
-
-        appSmtpHost               <- o .:? "smtp-host"
-        appSmtpUser               <- o .:? "smtp-user"
-        appSmtpPassword           <- o .:? "smtp-password"
-        appSmtpPort               <- withScientific "PortNumber" (pure . floor) =<< (o .: "smtp-port")
 
         appNotificationsHost      <- o .: "notifications-host"
         appNotificationsPort      <- o .: "notifications-port"

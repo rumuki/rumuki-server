@@ -108,7 +108,6 @@ library
                  , random
                  , safe
                  , silently
-                 , smtp-mail
                  , template-haskell
                  , text                          >= 0.11       && < 2.0
                  , time
