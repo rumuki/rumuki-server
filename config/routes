@@ -1,6 +1,7 @@
 / HomeR GET
 
 /api/health HealthR GET
+/api/healthz HealthzR GET
 /api/device DevicesR POST DELETE
 /api/subscriber SubscribersR POST
 /api/feedback FeedbackR POST
