@@ -60,10 +60,10 @@ withApp = before $ do
         ["config/test-settings.yml", "config/settings.yml"]
         []
         ignoreEnv
-    foundation <- makeFoundation settings
-    logWare <- liftIO $ makeLogWare foundation
-    wipeDB foundation
-    return (foundation, logWare)
+    app <- makeFoundation settings
+    logWare <- liftIO $ makeLogWare app
+    wipeDB app
+    return (app, logWare)
 
 -- This function will truncate all of the tables in your database.
 -- 'withApp' calls it before each test, creating a clean environment for each
