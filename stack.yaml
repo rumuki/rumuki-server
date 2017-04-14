@@ -2,10 +2,10 @@
 
 docker:
   enable: true
-  repo: "nathankot/rumuki-stack-build:latest"
+  repo: "nathankot/rumuki-stack-build:lts-8.9"
 
 # Specifies the GHC version and set of packages available (e.g., lts-3.5, nightly-2015-09-21, ghc-7.10.2)
-resolver: lts-7.14
+resolver: lts-8.9
 
 # Local packages, usually specified by relative directory name
 packages:
@@ -13,11 +13,13 @@ packages:
 
 # Packages to be pulled from upstream that are not in the resolver (e.g., acme-missiles-0.3)
 extra-deps:
+  - HDBC-postgresql-2.3.2.4
+  - aws-0.16
   - data-easy-0.7.0
   - dbmigrations-2.0.0
+  - load-env-0.1.1
   - yaml-light-0.1.4
   - HsSyck-0.53
-  - HDBC-postgresql-2.3.2.4
 
 # Override default flag values for local packages and extra-deps
 flags: {}

@@ -10,12 +10,10 @@ module Settings where
 import ClassyPrelude.Yesod hiding (throw)
 import Control.Exception           (throw)
 import Data.Extension ()
-import Data.Aeson                  (Result (..), fromJSON, withObject, (.!=),
-                                    (.:?), withScientific)
+import Data.Aeson                  (Result (..), fromJSON, withObject, (.!=), (.:?))
 import Data.FileEmbed              (embedFile)
 import Data.Yaml                   (decodeEither')
 import Database.Persist.Postgresql (PostgresConf)
-import Network (PortNumber)
 import Network.Wai.Handler.Warp    (HostPreference)
 import Yesod.Default.Config2       (applyEnvValue, configSettingsYml)
 
