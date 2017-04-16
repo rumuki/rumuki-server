@@ -39,11 +39,12 @@ data AppSettings = AppSettings
     -- ^ Use detailed request logging system
     , appShouldLogAll           :: Bool
     -- ^ Should all log messages be displayed?
-    , appSkipCombining          :: Bool
-    -- ^ Perform no stylesheet/script combining
 
     , appNotificationsHost      :: String
     , appNotificationsPort      :: Int
+
+    , appGCSBucketName          :: String
+    , appGCSAPIKey              :: ByteString
 
     }
 
@@ -64,10 +65,12 @@ instance FromJSON AppSettings where
         appIsTesting              <- o .:? "app-is-testing"   .!= False
         appDetailedRequestLogging <- o .:? "detailed-logging" .!= defaultDev
         appShouldLogAll           <- o .:? "should-log-all"   .!= defaultDev
-        appSkipCombining          <- o .:? "skip-combining"   .!= defaultDev
 
         appNotificationsHost      <- o .: "notifications-host"
         appNotificationsPort      <- o .: "notifications-port"
+
+        appGCSBucketName          <- o .: "gcs-bucket-name"
+        appGCSAPIKey              <- o .: "gcs-api-key"
 
         return AppSettings {..}
 

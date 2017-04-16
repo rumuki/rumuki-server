@@ -1,11 +1,13 @@
 # Values formatted like "_env:ENV_VAR_NAME:default_value" can be overridden by the specified environment variable.
 # See https://github.com/yesodweb/yesod/wiki/Configuration#overriding-configuration-values-with-environment-variables
 
-# Defaults for `yesod devel` as a boilerplate
 host:                    "_env:HOST:*4" # any IPv4 host
 port:                    "_env:PORT:3000"
 app-root:                "_env:APP_ROOT:http://localhost:3000"
 ip-from-header:          "_env:IP_FROM_HEADER:true"
+
+gcs-bucket-name:         "_env:GCS_BUCKET_NAME:rumuki"
+gcs-api-key:             "_env:GCS_API_KEY:notanapikey"
 
 app-is-testing: false
 
