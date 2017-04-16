@@ -21,6 +21,8 @@ library
                      Handler.Feedback
                      Handler.Health
                      Handler.Home
+                     Handler.LongDistanceTransfer
+                     Handler.LongDistanceTransfers
                      Handler.PlaybackGrant
                      Handler.PlaybackGrants
                      Handler.ScreenCaptureDetections
@@ -32,6 +34,7 @@ library
                      Model
                      Model.Extension
                      Model.PlaybackGrant
+                     Model.LongDistanceTransfer
                      Model.PushNotification
                      Model.Subscriber
                      Model.Device
@@ -94,6 +97,8 @@ library
                  , hourglass
                  , http-conduit
                  , http-types
+                 , http-client
+                 , http-client-tls
                  , load-env
                  , mime-mail
                  , mime-types
@@ -163,6 +168,8 @@ test-suite test
                  , Handler.DeviceUpdateSpec
                  , Handler.ScreenCaptureDetectionsSpec
                  , Handler.SubscribersSpec
+                 , Handler.LongDistanceTransferSpec
+                 , Handler.LongDistanceTransfersSpec
                  , TestExtension
                  , TestFactory
                  , TestImport
@@ -183,6 +190,7 @@ test-suite test
                  , entropy
                  , file-embed
                  , hspec >= 2.0.0
+                 , http-client
                  , http-types
                  , monad-logger
                  , network

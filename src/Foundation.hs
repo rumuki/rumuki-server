@@ -10,6 +10,8 @@ import qualified Network.Wai as W
 import           Network.Wai.Middleware.Cors
 import           Yesod.Core.Types (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
+import qualified Network.HTTP.Client as HTTP
+import qualified Data.ByteString.Lazy as LBS
 import           Data.CaseInsensitive (CI)
 import qualified Data.ByteString as BS
 
@@ -21,6 +23,7 @@ data App = App
     { appSettings    :: AppSettings
     , appConnPool    :: ConnectionPool -- ^ Database connection pool.
     , appHttpManager :: Manager
+    , appHttpClient  :: HTTP.Request -> IO (HTTP.Response LBS.ByteString)
     , appLogger      :: Logger
     }
 

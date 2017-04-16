@@ -29,6 +29,8 @@ import           Network.Wai.Middleware.AcceptOverride
 import           Network.Wai.Middleware.Autohead
 import           Network.Wai.Middleware.MethodOverride
 import           Network.Wai.Middleware.Cors
+import qualified Network.HTTP.Client as HTTP
+import           Network.HTTP.Client.TLS (tlsManagerSettings)
 import           Yesod.Core.Types (loggerSet)
 import           System.Log.FastLogger (pushLogStr)
 import           System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet, toLogStr)
@@ -46,6 +48,8 @@ import           Handler.Health
 import           Handler.Home
 import           Handler.PlaybackGrant
 import           Handler.PlaybackGrants
+import           Handler.LongDistanceTransfer
+import           Handler.LongDistanceTransfers
 import           Handler.DeviceUpdate
 import           Handler.Subscribers
 import           Handler.ScreenCaptureDetections
@@ -64,6 +68,8 @@ makeFoundation appSettings = do
     -- Some basic initializations: HTTP connection manager, logger
     appHttpManager <- newManager
     appLogger <- newStdoutLoggerSet defaultBufSize >>= makeYesodLogger
+    httpManager <- HTTP.newManager tlsManagerSettings
+    let appHttpClient = flip HTTP.httpLbs $ httpManager
 
     -- We need a log function to create a connection pool. We need a connection
     -- pool to create our foundation. And we need our foundation to get a
