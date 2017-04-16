@@ -1,0 +1,15 @@
+Depends: schema
+Apply: |
+  CREATE TABLE "long_distance_transfer" (
+    "id"                            SERIAL8    PRIMARY  KEY   UNIQUE,
+    "recording_u_i_d"               VARCHAR    NOT      NULL,
+    "recording_name_cipher"         BYTEA      NOT      NULL,
+    "recipient_key_fingerprint"     BYTEA      NOT      NULL,
+    "sender_key_fingerprint_cipher" BYTEA      NOT      NULL,
+    "key_cipher"                    BYTEA      NOT      NULL,
+    "created"                       TIMESTAMP  WITH     TIME  ZONE  NOT  NULL  DEFAULT  now()
+  );
+
+  ALTER TABLE "long_distance_transfer"
+  ADD CONSTRAINT "unique_long_distance_transfer"
+  UNIQUE("recording_u_i_d");

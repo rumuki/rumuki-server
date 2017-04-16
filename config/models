@@ -20,7 +20,6 @@ ScreenCaptureDetection json
 Device
     -- | This is used as a means of authenticating the update of a device APN token.
     token Text
-    -- | The BLAKE2 fingerprint of the device public key.
     keyFingerprint ByteString
     -- | Used to identify the device with Apple Push Notification Services.
     apnToken ByteString Maybe
@@ -33,16 +32,24 @@ Device
 -- | An entry that allows access to a key once. PlaybackGrants should be
 -- removed as soon as a device accesses the grant, or when the grant expires.
 PlaybackGrant
-    -- | The id of the recording
     recordingUID Text
-    -- | The BLAKE2 fingerprint of the recipient public key.
     recipientKeyFingerprint ByteString
     -- | Key encrypted with the recipients public key.
     keyCipher ByteString
     -- | The offset in which the key should be placed, this is no longer used by client encryption versions > 1.
     keyOffset Int Maybe
-    -- | When the key expires. Expiry date should be calculated by the Key Server.
     expires UTCTime
-    -- | When the playback grant was created.
     created UTCTime default=now()
   deriving Show
+
+-- | A recording that is temporarily stored by rumuki with the intent to be pulled
+-- by the recipient device. All LongDistanceTransfers have a TTL of one week.
+LongDistanceTransfer
+  recordingUID Text
+  recipientKeyFingerprint ByteString
+  recordingNameCipher ByteString
+  senderKeyFingerprintCipher ByteString
+  keyCipher ByteString
+  created UTCTime default=now()
+  UniqueLongDistanceTransfer recordingUID
+ deriving Show
