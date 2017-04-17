@@ -2,7 +2,6 @@ module Handler.LongDistanceTransferSpec
        (spec) where
 
 import qualified Data.ByteString.Lazy         as BSL
-import           Data.Time.Clock
 import           Network.HTTP.Client.Internal (Request (..), Response (..),
                                                ResponseClose (..),
                                                createCookieJar)
@@ -17,19 +16,17 @@ testGet = do
 
   withAppAndMockResponder mockResponderGet200 $ describe "getLongDistanceTransfer (object exists)" $ do
     it "returns the metadata along with an URL to the object" $ do
-      now <- liftIO getCurrentTime
-      _ <- runDB $ insert $ LongDistanceTransfer "recording123" "" "" "" "" now
+      Entity _ t <- runDB $ factoryLongDistanceTransfer id
       requestJSON $ do
-        setUrl $ LongDistanceTransferR "recording123"
+        setUrl $ LongDistanceTransferR $ longDistanceTransferRecordingUID t
         setMethod "GET"
       statusIs 200
 
   withAppAndMockResponder mockResponderGet404 $ describe "getLongDistanceTransfer (object doesn't exist)" $ do
     it "returns not found if the GCS object doesn't exist" $ do
-      now <- liftIO getCurrentTime
-      _ <- runDB $ insert $ LongDistanceTransfer "recording123" "" "" "" "" now
+      Entity _ t <- runDB $ factoryLongDistanceTransfer id
       requestJSON $ do
-        setUrl $ LongDistanceTransferR "recording123"
+        setUrl $ LongDistanceTransferR $ longDistanceTransferRecordingUID t
         setMethod "GET"
       statusIs 404
 
@@ -38,19 +35,17 @@ testDelete = do
 
   withAppAndMockResponder mockResponderDelete200 $ describe "deleteLongDistanceTransfer (object exists)" $ do
     it "deletes the object from GCS and the database" $ do
-      now <- liftIO getCurrentTime
-      _ <- runDB $ insert $ LongDistanceTransfer "recording123" "" "" "" "" now
+      Entity _ t <- runDB $ factoryLongDistanceTransfer id
       requestJSON $ do
-        setUrl $ LongDistanceTransferR "recording123"
+        setUrl $ LongDistanceTransferR $ longDistanceTransferRecordingUID t
         setMethod "DELETE"
       statusIs 204
 
   withAppAndMockResponder mockResponderDelete404 $ describe "deleteLongDistanceTransfer (object doesn't exist)" $ do
     it "succeeds even if the object doesn't exist on GCS, and deletes the database entry" $ do
-      now <- liftIO getCurrentTime
-      _ <- runDB $ insert $ LongDistanceTransfer "recording123" "" "" "" "" now
+      Entity _ t <- runDB $ factoryLongDistanceTransfer id
       requestJSON $ do
-        setUrl $ LongDistanceTransferR "recording123"
+        setUrl $ LongDistanceTransferR $ longDistanceTransferRecordingUID t
         setMethod "DELETE"
       statusIs 204
 
@@ -58,7 +53,7 @@ mockResponderGet200 :: Request -> Response BSL.ByteString
 mockResponderGet200
   Request { host               = "www.googleapis.com"
           , path               = "/storage/v1/b/rumuki/o/recording123"
-          , method             = methodGet } =
+          , method             = "GET" } =
   Response { responseStatus    = status200
            , responseVersion   = http11
            , responseHeaders   = [("Content-Length", "1")]
@@ -71,7 +66,7 @@ mockResponderGet404 :: Request -> Response BSL.ByteString
 mockResponderGet404
   Request { host               = "www.googleapis.com"
           , path               = "/storage/v1/b/rumuki/o/recording123"
-          , method             = methodGet } =
+          , method             = "GET" } =
   Response { responseStatus    = status404
            , responseVersion   = http11
            , responseHeaders   = [("Content-Length", "0")]
@@ -84,7 +79,7 @@ mockResponderDelete200 :: Request -> Response BSL.ByteString
 mockResponderDelete200
   Request { host               = "www.googleapis.com"
           , path               = "/storage/v1/b/rumuki/o/recording123"
-          , method             = methodDelete } =
+          , method             = "DELETE" } =
   Response { responseStatus    = status200
            , responseVersion   = http11
            , responseHeaders   = [("Content-Length", "0")]
@@ -97,7 +92,7 @@ mockResponderDelete404 :: Request -> Response BSL.ByteString
 mockResponderDelete404
   Request { host               = "www.googleapis.com"
           , path               = "/storage/v1/b/rumuki/o/recording123"
-          , method             = methodDelete } =
+          , method             = "DELETE" } =
   Response { responseStatus    = status404
            , responseVersion   = http11
            , responseHeaders   = [("Content-Length", "0")]

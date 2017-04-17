@@ -1,9 +1,10 @@
 module Handler.DeviceUpdate (postDeviceUpdateR) where
 
 import           Data.Aeson
-import           Data.Time.Clock     (getCurrentTime)
+import           Data.Time.Clock            (getCurrentTime)
 import           Import
-import           Model.PlaybackGrant ()
+import           Model.LongDistanceTransfer (longDistanceTransferObjectURL)
+import           Model.PlaybackGrant        ()
 
 data GETRequest = GETRequest [Text] ByteString
 
@@ -26,5 +27,20 @@ postDeviceUpdateR = do
 
   detections <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
   grants <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
-  sendResponseStatus status200 $ object [ "playbackGrants" .= grants
-                                        , "screenCaptureDetections" .= detections ]
+  transfers' <- runDB $ selectList [ LongDistanceTransferRecipientKeyFingerprint ==. keyFingerprint ] []
+  transfers <- filterExistingTransfers . fmap entityVal $ transfers'
+
+  sendResponseStatus status200 $ object [ "playbackGrants"          .= grants
+                                        , "screenCaptureDetections" .= detections
+                                        , "longDistanceTransfers"   .= transfers ]
+
+filterExistingTransfers :: [LongDistanceTransfer] -> Handler [LongDistanceTransfer]
+filterExistingTransfers transfers = do
+  httpClient <- appHttpClient <$> getYesod
+  settings <- appSettings <$> getYesod
+  fmap catMaybes $ sequence $ flip fmap transfers $ \t -> do
+    objectURL <- longDistanceTransferObjectURL t
+    request' <- parseRequest $ "GET " ++ objectURL
+    let request = setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
+    response <- liftIO $ httpClient request
+    bool (return Nothing) (return $ Just t) $ responseStatus response == status200

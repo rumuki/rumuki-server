@@ -3,7 +3,6 @@ module Handler.LongDistanceTransfersSpec
 
 import qualified Data.ByteString.Lazy         as BSL
 import           Data.HashMap.Strict          ((!))
-import           Data.Time.Clock
 import           Network.HTTP.Client.Internal (Request (..), Response (..),
                                                ResponseClose (..),
                                                createCookieJar)
@@ -28,13 +27,12 @@ testPost = describe "postLongDistanceTransfers" $ do
       in u == decodeUtf8 responseLocation
 
   it "handles recording UID conflicts" $ do
-    now <- lift $ getCurrentTime
-    _ <- runDB $ insert $ LongDistanceTransfer recordingUID "" "" "" "" now
+    _ <- runDB $ factoryLongDistanceTransfer id
     makeRequest
     statusIs 400
 
   where
-    recordingUID = "recordinguid123"
+    recordingUID = "recording123"
     makeRequest = requestJSON $ do
       setUrl LongDistanceTransfersR
       setMethod "POST"
@@ -51,7 +49,7 @@ mockResponder :: Request -> Response BSL.ByteString
 mockResponder
   Request { host = "www.googleapis.com"
           , path = "/upload/storage/v1/b/rumuki/o"
-          , method = methodPost
+          , method = "POST"
           , redirectCount = 0 } =
   Response { responseStatus = status200
            , responseVersion = http11

@@ -1,18 +1,14 @@
 module Handler.LongDistanceTransfer where
 
 import           Import
-import           Model.LongDistanceTransfer ()
+import           Model.LongDistanceTransfer (longDistanceTransferObjectURL, longDistanceTransferObjectURLFromRecordingUID)
 
 getLongDistanceTransferR :: Text -> Handler Value
 getLongDistanceTransferR ruid = do
   app <- getYesod
   let settings = appSettings app
-  transfer <- fromMaybeM notFound $ runDB $ getBy (UniqueLongDistanceTransfer ruid)
-
-  let objectURL = "https://www.googleapis.com/storage/v1/b/"
-                  ++ appGCSBucketName settings
-                  ++ "/o/"
-                  ++ unpack ruid
+  Entity _ transfer <- fromMaybeM notFound $ runDB $ getBy (UniqueLongDistanceTransfer ruid)
+  objectURL <- longDistanceTransferObjectURL transfer
 
   request' <- parseRequest $ "GET " ++ objectURL
   let request = setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
@@ -29,9 +25,10 @@ deleteLongDistanceTransferR ruid = do
   app <- getYesod
   let settings = appSettings app
   _ <- runDB $ deleteBy (UniqueLongDistanceTransfer ruid)
+  objectURL <- longDistanceTransferObjectURLFromRecordingUID ruid
 
   request' <- parseRequest
-              $ "DELETE https://www.googleapis.com/storage/v1/b/"
+              $ "DELETE " ++ objectURL
               ++ appGCSBucketName settings ++ "/o/" ++ unpack ruid
   let request = setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
   _ <- liftIO . appHttpClient app $ request
