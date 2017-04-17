@@ -37,6 +37,8 @@ HTTP/1.1 201 Created
 HTTP/1.1 204 No Content
 ```
 
+------
+
 ### `/api/recording/:recordingUID/playback-grant`
 
 #### `POST`
@@ -96,6 +98,8 @@ Content-Type: application/json
 HTTP/1.1 204 No Content
 ```
 
+------
+
 ### `/api/device/update`
 
 #### `POST`
@@ -104,7 +108,15 @@ HTTP/1.1 204 No Content
 
 ```javascript
 { recordingUIDs: [<string>]
-, deviceKeyFingerprint: <base64> }
+, deviceKeyFingerprint: <base64>
+, longDistanceTransfers:
+    [{ recordingUID: <string>
+     , recordingNameCipher: <base64>
+     , senderKeyFingerprintCipher: <base64>
+     , keyCipher: <base64>
+     , created: <time>
+    }]
+}
 ```
 
 ##### Response
@@ -123,6 +135,8 @@ HTTP/1.1 204 No Content
     }]
 }
 ```
+
+------
 
 ### `/api/recording/:recordingUID/playback-grant/:playbackGrantID`
 
@@ -148,6 +162,64 @@ Content-Type: application/json
 }
 ```
 
+------
+
+### `/api/long-distance-transfer`
+
+#### POST
+
+##### Request
+
+```javascript
+{ recordingUID: <string>
+, recipientKeyFingerprint: <base64>
+, recordingNameCipher: <base64>
+, senderKeyFingerprintCipher: <base64>
+, keyCipher: <base64>
+}
+```
+
+##### Response
+
+```http
+HTTP/1.1 200 OK
+```
+
+```javascript
+{ uploadURL: <string>
+}
+```
+
+------
+
+### `/api/long-distance-transfer/:recordingUID`
+
+#### GET
+
+##### Response
+
+```javascript
+{ longDistanceTransfer:
+   { recordingUID: <string>
+   , recordingNameCipher: <base64>
+   , senderKeyFingerprintCipher: <base64>
+   , keyCipher: <base64>
+   , created: <time>
+   ]
+, downloadURL: <string>
+}
+```
+
+#### DELETE
+
+##### Response
+
+```http
+HTTP/1.1 204 No Content
+```
+
+------
+
 ### `/api/subscriber`
 
 #### `POST`
@@ -172,6 +244,8 @@ HTTP/1.1 201 Created
     }
 }
 ```
+
+------
 
 ### `/api/feedback`
 
@@ -199,6 +273,8 @@ HTTP/1.1 201 Created
     }
 }
 ```
+
+------
 
 ### `/api/screen-capture-detection`
 
