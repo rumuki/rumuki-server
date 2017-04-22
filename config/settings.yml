@@ -7,9 +7,9 @@ app-root:                "_env:APP_ROOT:http://localhost:3000"
 ip-from-header:          "_env:IP_FROM_HEADER:true"
 
 gcs-bucket-name:         "_env:GCS_BUCKET_NAME:rumuki"
-gcs-authorize:           "true"
+gcs-authorize:           true
 
-app-is-testing: false
+app-is-testing:          false
 
 notifications-host:      "_env:NOTIFICATIONS_HOST:notifications"
 notifications-port:      "_env:NOTIFICATIONS_PORT:80"
