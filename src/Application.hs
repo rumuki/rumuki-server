@@ -34,6 +34,7 @@ import           Handler.Subscribers
 import           Import
 import           Language.Haskell.TH.Syntax            (qLocation)
 import qualified Migrations
+import qualified Network.Google                        as GC (LogLevel (..))
 import qualified Network.Google.Auth                   as GC
 import qualified Network.Google.Storage                as GCS (storageReadWriteScope)
 import qualified Network.HTTP.Client                   as HTTP
@@ -85,7 +86,9 @@ makeFoundation appSettings = do
       False -> return $ return . HTTP.setRequestHeader HTTP.hAuthorization ["Bearer mock-gcs"]
       True -> do
         gcCredentials <- GC.allow GCS.storageReadWriteScope <$> GC.getApplicationDefault httpManager
-        let gcLogger = \_ -> pushLogStrLn loggerSet . toLogStr . toByteString
+        let gcLogger = \logLevel -> case logLevel of
+              GC.Error -> pushLogStrLn loggerSet . toLogStr . toByteString
+              _ -> return . const ()
         gcStore <- GC.initStore gcCredentials gcLogger httpManager
         return $ \request -> GC.authorize request gcStore gcLogger httpManager
 
