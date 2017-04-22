@@ -95,7 +95,7 @@ library
                  , fast-logger
                  , file-embed
                  , filepath
-                 , gogol
+                 , gogol >= 0.2.0
                  , gogol-storage
                  , hourglass
                  , http-conduit
