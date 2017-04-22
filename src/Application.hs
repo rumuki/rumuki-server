@@ -59,7 +59,8 @@ import           Network.Wai.Middleware.RequestLogger  (Destination (Logger),
                                                         outputFormat)
 import           System.Log.FastLogger                 (defaultBufSize,
                                                         newStdoutLoggerSet,
-                                                        pushLogStr, toLogStr)
+                                                        pushLogStr,
+                                                        pushLogStrLn, toLogStr)
 import           Yesod.Core.Types                      (loggerSet)
 
 -- This line actually creates our YesodDispatch instance. It is the second half
@@ -84,7 +85,7 @@ makeFoundation appSettings = do
       False -> return $ return . HTTP.setRequestHeader HTTP.hAuthorization ["Bearer mock-gcs"]
       True -> do
         gcCredentials <- GC.allow GCS.storageReadWriteScope <$> GC.getApplicationDefault httpManager
-        let gcLogger = \_ -> pushLogStr loggerSet . toLogStr . toByteString
+        let gcLogger = \_ -> pushLogStrLn loggerSet . toLogStr . toByteString
         gcStore <- GC.initStore gcCredentials gcLogger httpManager
         return $ \request -> GC.authorize request gcStore gcLogger httpManager
 
