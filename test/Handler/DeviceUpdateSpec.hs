@@ -1,18 +1,16 @@
 module Handler.DeviceUpdateSpec (spec) where
 
-import qualified Data.ByteString.Lazy         as BSL
 import           Data.HashMap.Strict          ((!))
 import qualified Data.HashMap.Strict          as H
 import           Data.Time.Clock
 import qualified Data.Vector                  as V
-import           Network.HTTP.Client.Internal (Request (..), Response (..),
-                                               ResponseClose (..),
-                                               createCookieJar)
-import           Network.HTTP.Types           (http11, status200, status404)
+import           Network.HTTP.Client.Internal (Response (..))
+import           Network.HTTP.Types           (status404)
 import           TestImport
 
 spec :: Spec
 spec = do
+
 
   withApp $ do
 
@@ -47,7 +45,7 @@ spec = do
               let (Array grants) = v ! "playbackGrants"
               in length grants == 1
 
-  withAppAndMockResponder mockResponderGet200 $ do
+  withAppAndMockResponder (makeMockResponder id) $ do
 
     describe "postDeviceUpdateR (GCS object exists)" $ do
 
@@ -61,7 +59,7 @@ spec = do
           let (Array transfers) = v ! "longDistanceTransfers"
           in length transfers == 1
 
-  withAppAndMockResponder mockResponderGet404 $ do
+  withAppAndMockResponder (makeMockResponder $ \r -> r { responseStatus = status404 }) $ do
 
     describe "postDeviceUpdateR (GCS object doesn't exist)" $ do
 
@@ -77,6 +75,7 @@ spec = do
 
   where
     recordingUID = "recording123"
+    makeMockResponder = mockGCResponder "/storage/v1/b/rumuki/o/recording123" "GET"
     makeDevice = runDB $ retrieve $ factoryDevice id
     makeGrant device = runDB $ factoryPlaybackGrant device $ \g -> g { playbackGrantRecordingUID = recordingUID }
     makeRequest (Entity _ d) = requestJSON $ do
@@ -84,29 +83,3 @@ spec = do
       setMethod "POST"
       setRequestBody $ encode $ object [ "recordingUIDs" .= ([recordingUID] :: [Text])
                                        , "deviceKeyFingerprint" .= deviceKeyFingerprint d ]
-
-mockResponderGet200 :: Request -> Response BSL.ByteString
-mockResponderGet200
-  Request { host               = "www.googleapis.com"
-          , path               = "/storage/v1/b/rumuki/o/recording123"
-          , method             = "GET" } =
-  Response { responseStatus    = status200
-           , responseVersion   = http11
-           , responseHeaders   = [("Content-Length", "3")]
-           , responseCookieJar = createCookieJar []
-           , responseClose'    = ResponseClose $ return ()
-           , responseBody      = "{}" } -- In reality an object resource is returned
-mockResponderGet200 r = error $ "Unexpected request: " ++ show r
-
-mockResponderGet404 :: Request -> Response BSL.ByteString
-mockResponderGet404
-  Request { host               = "www.googleapis.com"
-          , path               = "/storage/v1/b/rumuki/o/recording123"
-          , method             = "GET" } =
-  Response { responseStatus    = status404
-           , responseVersion   = http11
-           , responseHeaders   = [("Content-Length", "0")]
-           , responseCookieJar = createCookieJar []
-           , responseClose'    = ResponseClose $ return ()
-           , responseBody      = "" }
-mockResponderGet404 r = error $ "Unexpected request: " ++ show r

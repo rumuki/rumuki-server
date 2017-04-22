@@ -8,6 +8,7 @@ ip-from-header:          "_env:IP_FROM_HEADER:true"
 
 gcs-bucket-name:         "_env:GCS_BUCKET_NAME:rumuki"
 gcs-api-key:             "_env:GCS_API_KEY:notanapikey"
+gcs-authorize:           "true"
 
 app-is-testing: false
 

@@ -75,6 +75,7 @@ library
                  , base16-bytestring
                  , base64-bytestring
                  , binary
+                 , blaze-builder
                  , bytestring
                  , case-insensitive
                  , classy-prelude
@@ -94,6 +95,8 @@ library
                  , fast-logger
                  , file-embed
                  , filepath
+                 , gogol
+                 , gogol-storage
                  , hourglass
                  , http-conduit
                  , http-types
@@ -191,6 +194,7 @@ test-suite test
                  , file-embed
                  , hspec >= 2.0.0
                  , http-client
+                 , http-conduit
                  , http-types
                  , monad-logger
                  , network

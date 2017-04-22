@@ -1,58 +1,66 @@
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TemplateHaskell #-}
+
 module Application
     ( getApplicationDev
     , appMain
     , develMain
     , makeFoundation
     , makeLogWare
-    -- * for DevelMain
     , getApplicationRepl
     , shutdownApp
-    -- * for GHCI
     , handler
     , db
     ) where
 
-#if DEVELOPMENT
-import           LoadEnv
-#endif
-
-import qualified Migrations
-import           Control.Concurrent (forkIO)
-import           Control.Monad.Logger (liftLoc, runLoggingT)
+import           Blaze.ByteString.Builder              (toByteString)
+import           Control.Concurrent                    (forkIO)
+import           Control.Monad.Logger                  (liftLoc, runLoggingT)
 import           Data.Time.Clock
+import           Database.Persist.Postgresql           (createPostgresqlPool,
+                                                        pgConnStr, pgPoolSize)
 import           Database.Persist.Sql
-import           Import
-import           Database.Persist.Postgresql (createPostgresqlPool, pgConnStr, pgPoolSize)
-import           Language.Haskell.TH.Syntax (qLocation)
-import           Network.Wai (Middleware)
-import           Network.Wai.Middleware.AcceptOverride
-import           Network.Wai.Middleware.Autohead
-import           Network.Wai.Middleware.MethodOverride
-import           Network.Wai.Middleware.Cors
-import qualified Network.HTTP.Client as HTTP
-import           Network.HTTP.Client.TLS (tlsManagerSettings)
-import           Yesod.Core.Types (loggerSet)
-import           System.Log.FastLogger (pushLogStr)
-import           System.Log.FastLogger (defaultBufSize, newStdoutLoggerSet, toLogStr)
-import           Network.Wai.Handler.Warp    (Settings, defaultSettings,
-                                              defaultShouldDisplayException,
-                                              runSettings, setHost,
-                                              setOnException, setPort, getPort)
-import           Network.Wai.Middleware.RequestLogger (Destination (Logger),
-                                                       IPAddrSource (..),
-                                                       OutputFormat (..), destination,
-                                                       mkRequestLogger, outputFormat)
 import           Handler.Devices
+import           Handler.DeviceUpdate
 import           Handler.Feedback
 import           Handler.Health
 import           Handler.Home
-import           Handler.PlaybackGrant
-import           Handler.PlaybackGrants
 import           Handler.LongDistanceTransfer
 import           Handler.LongDistanceTransfers
-import           Handler.DeviceUpdate
-import           Handler.Subscribers
+import           Handler.PlaybackGrant
+import           Handler.PlaybackGrants
 import           Handler.ScreenCaptureDetections
+import           Handler.Subscribers
+import           Import
+import           Language.Haskell.TH.Syntax            (qLocation)
+import qualified Migrations
+import qualified Network.Google.Auth                   as GC
+import qualified Network.Google.Storage                as GCS (storageReadWriteScope)
+import qualified Network.HTTP.Client                   as HTTP
+import qualified Network.HTTP.Client.TLS               as HTTP (tlsManagerSettings)
+import qualified Network.HTTP.Simple                   as HTTP (setRequestHeader)
+import qualified Network.HTTP.Types                    as HTTP (hAuthorization)
+import           Network.Wai                           (Middleware)
+import           Network.Wai.Handler.Warp              (Settings,
+                                                        defaultSettings,
+                                                        defaultShouldDisplayException,
+                                                        getPort, runSettings,
+                                                        setHost, setOnException,
+                                                        setPort)
+import           Network.Wai.Middleware.AcceptOverride
+import           Network.Wai.Middleware.Autohead
+import           Network.Wai.Middleware.Cors
+import           Network.Wai.Middleware.MethodOverride
+import           Network.Wai.Middleware.RequestLogger  (Destination (Logger),
+                                                        IPAddrSource (..),
+                                                        OutputFormat (..),
+                                                        destination,
+                                                        mkRequestLogger,
+                                                        outputFormat)
+import           System.Log.FastLogger                 (defaultBufSize,
+                                                        newStdoutLoggerSet,
+                                                        pushLogStr, toLogStr)
+import           Yesod.Core.Types                      (loggerSet)
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
@@ -65,11 +73,20 @@ mkYesodDispatch "App" resourcesApp
 -- migrations handled by Yesod.
 makeFoundation :: AppSettings -> IO App
 makeFoundation appSettings = do
-    -- Some basic initializations: HTTP connection manager, logger
+    -- Some basic initialization: HTTP connection manager, logger
     appHttpManager <- newManager
-    appLogger <- newStdoutLoggerSet defaultBufSize >>= makeYesodLogger
-    httpManager <- HTTP.newManager tlsManagerSettings
+    loggerSet <- newStdoutLoggerSet defaultBufSize
+    appLogger <- makeYesodLogger loggerSet
+    httpManager <- HTTP.newManager HTTP.tlsManagerSettings
     let appHttpClient = flip HTTP.httpLbs $ httpManager
+
+    appGoogleCloudAuthorizer <- case appGCSAuthorize appSettings of
+      False -> return $ return . HTTP.setRequestHeader HTTP.hAuthorization ["Bearer mock-gcs"]
+      True -> do
+        gcCredentials <- GC.allow GCS.storageReadWriteScope <$> GC.getApplicationDefault httpManager
+        let gcLogger = \_ -> pushLogStr loggerSet . toLogStr . toByteString
+        gcStore <- GC.initStore gcCredentials gcLogger httpManager
+        return $ \request -> GC.authorize request gcStore gcLogger httpManager
 
     -- We need a log function to create a connection pool. We need a connection
     -- pool to create our foundation. And we need our foundation to get a
@@ -143,9 +160,6 @@ getApplicationDev = do
 
 getAppSettings :: IO AppSettings
 getAppSettings = do
-#if DEVELOPMENT
-    loadEnv
-#endif
     loadYamlSettings [configSettingsYml] [] useEnv
 
 -- | main function for use by yesod devel

@@ -1,4 +1,5 @@
 app-is-testing: true
+gcs-authorize: false
 should-log-all: false
 database:
   user: "rumuki"

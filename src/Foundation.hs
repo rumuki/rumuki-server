@@ -20,11 +20,12 @@ import qualified Data.ByteString as BS
 -- starts running, such as database connections. Every handler will have
 -- access to the data present here.
 data App = App
-    { appSettings    :: AppSettings
-    , appConnPool    :: ConnectionPool -- ^ Database connection pool.
-    , appHttpManager :: Manager
-    , appHttpClient  :: HTTP.Request -> IO (HTTP.Response LBS.ByteString)
-    , appLogger      :: Logger
+    { appSettings              :: AppSettings
+    , appConnPool              :: ConnectionPool -- ^ Database connection pool.
+    , appHttpManager           :: Manager
+    , appHttpClient            :: HTTP.Request -> IO (HTTP.Response LBS.ByteString)
+    , appGoogleCloudAuthorizer :: HTTP.Request -> IO HTTP.Request
+    , appLogger                :: Logger
     }
 
 --------------------------------------------------------------------------------

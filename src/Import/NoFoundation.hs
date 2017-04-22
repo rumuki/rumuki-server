@@ -3,7 +3,7 @@ module Import.NoFoundation
     ( module Import
     ) where
 
-import           ClassyPrelude.Yesod   as Import hiding (Handler)
+import           ClassyPrelude.Yesod   as Import
 import           Data.Aeson            as Import (encode)
 import           Data.Extension        as Import ()
 import           Data.HashMap.Strict   as Import ((!))

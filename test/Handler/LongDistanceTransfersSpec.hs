@@ -1,20 +1,13 @@
 module Handler.LongDistanceTransfersSpec
        (spec) where
 
-import qualified Data.ByteString.Lazy         as BSL
+import qualified Data.ByteString.Lazy         as LB
 import           Data.HashMap.Strict          ((!))
-import           Network.HTTP.Client.Internal (Request (..), Response (..),
-                                               ResponseClose (..),
-                                               createCookieJar)
-import           Network.HTTP.Types           (http11, status200)
+import           Network.HTTP.Client.Internal (Request, Response (..))
 import           TestImport
 
 spec :: Spec
 spec = withAppAndMockResponder mockResponder $ testPost
-
-responseLocation :: ByteString
-responseLocation = "https://www.googleapis.com/upload/storage/v1/b/rumuki/o"
-                   ++ "?uploadType=resumable&upload_id=xa298sd_sdlkj2"
 
 testPost :: SpecWith (TestApp App)
 testPost = describe "postLongDistanceTransfers" $ do
@@ -41,23 +34,13 @@ testPost = describe "postLongDistanceTransfers" $ do
                , "recipientKeyFingerprint"    .= ("recipientkeyfingerprint" :: ByteString)
                , "recordingNameCipher"        .= ("recordingnameciphertext" :: ByteString)
                , "senderKeyFingerprintCipher" .= ("senderkeyfingerprintcipher" :: ByteString)
-               , "keyCipher"                  .= ("keycipher" :: ByteString)
-               ]
+               , "keyCipher"                  .= ("keycipher" :: ByteString) ]
 
-mockResponder :: Request -> Response BSL.ByteString
+responseLocation :: ByteString
+responseLocation = "https://www.googleapis.com/upload/storage/v1/b/rumuki/o"
+                   ++ "?uploadType=resumable&upload_id=xa298sd_sdlkj2"
 
-mockResponder
-  Request { host = "www.googleapis.com"
-          , path = "/upload/storage/v1/b/rumuki/o"
-          , method = "POST"
-          , redirectCount = 0 } =
-  Response { responseStatus = status200
-           , responseVersion = http11
-           , responseHeaders = [ ("Location", responseLocation)
-                               , ("Content-Length", "0") ]
-           , responseBody = ""
-           , responseCookieJar = createCookieJar []
-           , responseClose' = ResponseClose $ return ()
-           }
-
-mockResponder r = error $ "Unexpected request: " ++ show r
+mockResponder :: Request -> Response LB.ByteString
+mockResponder = mockGCResponder "/upload/storage/v1/b/rumuki/o" "POST" $ \r ->
+  r { responseHeaders = [ ("Location", responseLocation)
+                        , ("Content-Length", "0") ] }

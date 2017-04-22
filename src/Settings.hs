@@ -1,4 +1,7 @@
-{-# LANGUAGE StandaloneDeriving, RankNTypes #-}
+{-# LANGUAGE RankNTypes         #-}
+{-# LANGUAGE RecordWildCards    #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 -- | Settings are centralized, as much as possible, into this file. This
 -- includes database connection settings, static file locations, etc.
@@ -7,15 +10,16 @@
 -- declared in the Foundation.hs file.
 module Settings where
 
-import ClassyPrelude.Yesod hiding (throw)
-import Control.Exception           (throw)
-import Data.Extension ()
-import Data.Aeson                  (Result (..), fromJSON, withObject, (.!=), (.:?))
-import Data.FileEmbed              (embedFile)
-import Data.Yaml                   (decodeEither')
-import Database.Persist.Postgresql (PostgresConf)
-import Network.Wai.Handler.Warp    (HostPreference)
-import Yesod.Default.Config2       (applyEnvValue, configSettingsYml)
+import           ClassyPrelude.Yesod         hiding (throw)
+import           Control.Exception           (throw)
+import           Data.Aeson                  (Result (..), fromJSON, withObject,
+                                              (.!=), (.:?))
+import           Data.Extension              ()
+import           Data.FileEmbed              (embedFile)
+import           Data.Yaml                   (decodeEither')
+import           Database.Persist.Postgresql (PostgresConf)
+import           Network.Wai.Handler.Warp    (HostPreference)
+import           Yesod.Default.Config2       (applyEnvValue, configSettingsYml)
 
 -- | Runtime settings to configure this application. These settings can be
 -- loaded from various sources: defaults, environment variables, config files,
@@ -45,17 +49,14 @@ data AppSettings = AppSettings
 
     , appGCSBucketName          :: String
     , appGCSAPIKey              :: ByteString
+    , appGCSAuthorize           :: Bool
+    -- ^ Whether or not the app should authorize requests to GCS.
+    -- This should be set to @False@ during testing.
 
     }
 
 instance FromJSON AppSettings where
     parseJSON = withObject "AppSettings" $ \o -> do
-        let defaultDev =
-#if DEVELOPMENT
-                True
-#else
-                False
-#endif
         appDatabaseConf           <- o .: "database"
         appRoot                   <- o .: "app-root"
         appHost                   <- fromString <$> o .: "host"
@@ -63,14 +64,15 @@ instance FromJSON AppSettings where
         appIpFromHeader           <- o .: "ip-from-header"
 
         appIsTesting              <- o .:? "app-is-testing"   .!= False
-        appDetailedRequestLogging <- o .:? "detailed-logging" .!= defaultDev
-        appShouldLogAll           <- o .:? "should-log-all"   .!= defaultDev
+        appDetailedRequestLogging <- o .:? "detailed-logging" .!= False
+        appShouldLogAll           <- o .:? "should-log-all"   .!= False
 
         appNotificationsHost      <- o .: "notifications-host"
         appNotificationsPort      <- o .: "notifications-port"
 
         appGCSBucketName          <- o .: "gcs-bucket-name"
         appGCSAPIKey              <- o .: "gcs-api-key"
+        appGCSAuthorize           <- o .:? "gcs-authorize" .!= True
 
         return AppSettings {..}
 

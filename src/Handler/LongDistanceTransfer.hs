@@ -11,14 +11,14 @@ getLongDistanceTransferR ruid = do
   objectURL <- longDistanceTransferObjectURL transfer
 
   request' <- parseRequest $ "GET " ++ objectURL
-  let request = setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
+  request <- liftIO $ appGoogleCloudAuthorizer app
+             $ setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
   response <- liftIO . appHttpClient app $ request
   when (responseStatus response /= status200) $ notFound
 
   sendResponseStatus status200 $ object [
       "longDistanceTransfer" .= transfer
     , "downloadURL" .= objectURL ]
-
 
 deleteLongDistanceTransferR :: Text -> Handler Value
 deleteLongDistanceTransferR ruid = do
@@ -30,7 +30,8 @@ deleteLongDistanceTransferR ruid = do
   request' <- parseRequest
               $ "DELETE " ++ objectURL
               ++ appGCSBucketName settings ++ "/o/" ++ unpack ruid
-  let request = setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
+  request <- liftIO $ appGoogleCloudAuthorizer app
+             $ setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
   _ <- liftIO . appHttpClient app $ request
 
   sendResponseStatus status204 ()

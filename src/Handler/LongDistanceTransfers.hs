@@ -40,11 +40,13 @@ postLongDistanceTransfersR = do
               ++ "/o"
 
   let zeroRedirectCount r = r { redirectCount = 0 }
-  let request = setQueryString [ ("uploadType", Just "resumable")
-                               , ("name", Just . encodeUtf8 $ recordingUID req)
-                               , ("key", Just . appGCSAPIKey $ settings) ]
-        $ zeroRedirectCount
-        $ request'
+  request <- liftIO
+             $ appGoogleCloudAuthorizer app
+             $ setQueryString [ ("uploadType", Just "resumable")
+                              , ("name", Just . encodeUtf8 $ recordingUID req)
+                              , ("key", Just . appGCSAPIKey $ settings) ]
+             $ zeroRedirectCount
+             $ request'
 
   response <- liftIO . appHttpClient app $ request
 

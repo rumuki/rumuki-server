@@ -34,13 +34,16 @@ postDeviceUpdateR = do
                                         , "screenCaptureDetections" .= detections
                                         , "longDistanceTransfers"   .= transfers ]
 
+-- | Given a list of long distance transfers, filters out any transfers that either
+-- no longer exist, or are incompletely uploaded.
 filterExistingTransfers :: [LongDistanceTransfer] -> Handler [LongDistanceTransfer]
 filterExistingTransfers transfers = do
   httpClient <- appHttpClient <$> getYesod
   settings <- appSettings <$> getYesod
-  fmap catMaybes $ sequence $ flip fmap transfers $ \t -> do
+  gcAuthorizer <- appGoogleCloudAuthorizer <$> getYesod
+  fmap catMaybes $ sequenceA $ flip fmap transfers $ \t -> do
     objectURL <- longDistanceTransferObjectURL t
     request' <- parseRequest $ "GET " ++ objectURL
-    let request = setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
+    request <- liftIO $ gcAuthorizer $ setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
     response <- liftIO $ httpClient request
     bool (return Nothing) (return $ Just t) $ responseStatus response == status200
