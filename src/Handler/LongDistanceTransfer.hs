@@ -6,13 +6,10 @@ import           Model.LongDistanceTransfer (longDistanceTransferObjectURL, long
 getLongDistanceTransferR :: Text -> Handler Value
 getLongDistanceTransferR ruid = do
   app <- getYesod
-  let settings = appSettings app
   Entity _ transfer <- fromMaybeM notFound $ runDB $ getBy (UniqueLongDistanceTransfer ruid)
   objectURL <- longDistanceTransferObjectURL transfer
 
-  request' <- parseRequest $ "GET " ++ objectURL
-  request <- liftIO $ appGoogleCloudAuthorizer app
-             $ setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
+  request <- parseRequest ("GET " ++ objectURL) >>= liftIO . appGoogleCloudAuthorizer app
   response <- liftIO . appHttpClient app $ request
   when (responseStatus response /= status200) $ notFound
 
@@ -27,11 +24,10 @@ deleteLongDistanceTransferR ruid = do
   _ <- runDB $ deleteBy (UniqueLongDistanceTransfer ruid)
   objectURL <- longDistanceTransferObjectURLFromRecordingUID ruid
 
-  request' <- parseRequest
-              $ "DELETE " ++ objectURL
-              ++ appGCSBucketName settings ++ "/o/" ++ unpack ruid
-  request <- liftIO $ appGoogleCloudAuthorizer app
-             $ setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
+  request <- parseRequest ("DELETE "
+                           ++ objectURL
+                           ++ appGCSBucketName settings ++ "/o/" ++ unpack ruid)
+             >>= liftIO . appGoogleCloudAuthorizer app
   _ <- liftIO . appHttpClient app $ request
 
   sendResponseStatus status204 ()

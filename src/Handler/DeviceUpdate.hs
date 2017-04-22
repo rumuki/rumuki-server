@@ -39,11 +39,9 @@ postDeviceUpdateR = do
 filterExistingTransfers :: [LongDistanceTransfer] -> Handler [LongDistanceTransfer]
 filterExistingTransfers transfers = do
   httpClient <- appHttpClient <$> getYesod
-  settings <- appSettings <$> getYesod
   gcAuthorizer <- appGoogleCloudAuthorizer <$> getYesod
   fmap catMaybes $ sequenceA $ flip fmap transfers $ \t -> do
     objectURL <- longDistanceTransferObjectURL t
-    request' <- parseRequest $ "GET " ++ objectURL
-    request <- liftIO $ gcAuthorizer $ setQueryString [("key", Just . appGCSAPIKey $ settings)] request'
+    request <- parseRequest ("GET " ++ objectURL) >>= liftIO . gcAuthorizer
     response <- liftIO $ httpClient request
     bool (return Nothing) (return $ Just t) $ responseStatus response == status200

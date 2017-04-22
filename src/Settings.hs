@@ -48,7 +48,6 @@ data AppSettings = AppSettings
     , appNotificationsPort      :: Int
 
     , appGCSBucketName          :: String
-    , appGCSAPIKey              :: ByteString
     , appGCSAuthorize           :: Bool
     -- ^ Whether or not the app should authorize requests to GCS.
     -- This should be set to @False@ during testing.
@@ -71,7 +70,6 @@ instance FromJSON AppSettings where
         appNotificationsPort      <- o .: "notifications-port"
 
         appGCSBucketName          <- o .: "gcs-bucket-name"
-        appGCSAPIKey              <- o .: "gcs-api-key"
         appGCSAuthorize           <- o .:? "gcs-authorize" .!= True
 
         return AppSettings {..}

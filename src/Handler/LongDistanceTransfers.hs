@@ -43,8 +43,7 @@ postLongDistanceTransfersR = do
   request <- liftIO
              $ appGoogleCloudAuthorizer app
              $ setQueryString [ ("uploadType", Just "resumable")
-                              , ("name", Just . encodeUtf8 $ recordingUID req)
-                              , ("key", Just . appGCSAPIKey $ settings) ]
+                              , ("name", Just . encodeUtf8 $ recordingUID req) ]
              $ zeroRedirectCount
              $ request'
 
