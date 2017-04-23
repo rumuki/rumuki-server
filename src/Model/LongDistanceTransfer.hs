@@ -25,7 +25,7 @@ longDistanceTransferObjectURLFromRecordingUID ruid = do
   app <- getYesod
   let settings = appSettings app
   return
-    $ "https://www.googleapis.com/storage/v1/b/"
+    $ "https://storage.googleapis.com/"
     ++ appGCSBucketName settings
-    ++ "/o/"
+    ++ "/"
     ++ unpack ruid
