@@ -21,8 +21,8 @@ library
                      Handler.Feedback
                      Handler.Health
                      Handler.Home
-                     Handler.LongDistanceTransfer
-                     Handler.LongDistanceTransfers
+                     Handler.RemoteTransfer
+                     Handler.RemoteTransfers
                      Handler.PlaybackGrant
                      Handler.PlaybackGrants
                      Handler.ScreenCaptureDetections
@@ -34,7 +34,7 @@ library
                      Model
                      Model.Extension
                      Model.PlaybackGrant
-                     Model.LongDistanceTransfer
+                     Model.RemoteTransfer
                      Model.PushNotification
                      Model.Subscriber
                      Model.Device
@@ -171,8 +171,8 @@ test-suite test
                  , Handler.DeviceUpdateSpec
                  , Handler.ScreenCaptureDetectionsSpec
                  , Handler.SubscribersSpec
-                 , Handler.LongDistanceTransferSpec
-                 , Handler.LongDistanceTransfersSpec
+                 , Handler.RemoteTransferSpec
+                 , Handler.RemoteTransfersSpec
                  , TestExtension
                  , TestFactory
                  , TestImport

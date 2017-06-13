@@ -109,7 +109,7 @@ HTTP/1.1 204 No Content
 ```javascript
 { recordingUIDs: [<string>]
 , deviceKeyFingerprint: <base64>
-, longDistanceTransfers:
+, remoteTransfers:
     [{ recordingUID: <string>
      , recordingNameCipher: <base64>
      , senderKeyFingerprintCipher: <base64>
@@ -164,7 +164,7 @@ Content-Type: application/json
 
 ------
 
-### `/api/long-distance-transfer`
+### `/api/remote-transfer`
 
 #### POST
 
@@ -192,14 +192,14 @@ HTTP/1.1 200 OK
 
 ------
 
-### `/api/long-distance-transfer/:recordingUID`
+### `/api/remote-transfer/:recordingUID`
 
 #### GET
 
 ##### Response
 
 ```javascript
-{ longDistanceTransfer:
+{ remoteTransfer:
    { recordingUID: <string>
    , recordingNameCipher: <base64>
    , senderKeyFingerprintCipher: <base64>

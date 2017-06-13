@@ -1,6 +1,6 @@
 module TestFactory ( factoryDevice
                    , factoryPlaybackGrant
-                   , factoryLongDistanceTransfer ) where
+                   , factoryRemoteTransfer ) where
 
 import ClassyPrelude
 import System.Entropy
@@ -42,11 +42,11 @@ factoryPlaybackGrant (Entity _ rd) transform = do
   pgid <- insert playbackGrant
   return $ Entity pgid playbackGrant
 
-factoryLongDistanceTransfer :: (MonadIO m, SqlBackend ~ backend)
-                            => (LongDistanceTransfer -> LongDistanceTransfer)
-                            -> ReaderT backend m (Entity LongDistanceTransfer)
-factoryLongDistanceTransfer transform = do
+factoryRemoteTransfer :: (MonadIO m, SqlBackend ~ backend)
+                            => (RemoteTransfer -> RemoteTransfer)
+                            -> ReaderT backend m (Entity RemoteTransfer)
+factoryRemoteTransfer transform = do
   now <- liftIO getCurrentTime
-  let transfer = transform $ LongDistanceTransfer "recording123" "" "" "" "" now
+  let transfer = transform $ RemoteTransfer "recording123" "" "" "" "" now
   tid <- insert transfer
   return $ Entity tid transfer

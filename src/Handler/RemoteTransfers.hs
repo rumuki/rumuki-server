@@ -1,35 +1,35 @@
-module Handler.LongDistanceTransfers where
+module Handler.RemoteTransfers where
 
 import           Data.Aeson          (withObject)
 import           Data.Time.Clock
 import           Import
 import           Network.HTTP.Simple (getResponseHeader)
 
-data POSTLongDistanceTransfersRequest =
-  POSTLongDistanceTransfersRequest { recordingUID :: Text
+data POSTRemoteTransfersRequest =
+  POSTRemoteTransfersRequest { recordingUID :: Text
                                    , recipientKeyFingerprint :: ByteString
                                    , recordingNameCipher :: ByteString
                                    , senderKeyFingerprintCipher :: ByteString
                                    , keyCipher :: ByteString
                                    }
 
-instance FromJSON POSTLongDistanceTransfersRequest where
+instance FromJSON POSTRemoteTransfersRequest where
   parseJSON = withObject "transfer request object" $ \o ->
-    POSTLongDistanceTransfersRequest
+    POSTRemoteTransfersRequest
     <$> o .: "recordingUID"
     <*> o .: "recipientKeyFingerprint"
     <*> o .: "recordingNameCipher"
     <*> o .: "senderKeyFingerprintCipher"
     <*> o .: "keyCipher"
 
-postLongDistanceTransfersR :: Handler Value
-postLongDistanceTransfersR = do
+postRemoteTransfersR :: Handler Value
+postRemoteTransfersR = do
   app <- getYesod
   req <- requireJsonBody
   now <- liftIO getCurrentTime
   let settings = appSettings app
 
-  existingTransfer <- runDB $ getBy $ UniqueLongDistanceTransfer (recordingUID req)
+  existingTransfer <- runDB $ getBy $ UniqueRemoteTransfer (recordingUID req)
   case isJust existingTransfer of
     True -> invalidArgsI [MsgTransferForRecordingAlreadyExists]
     False -> return ()
@@ -59,7 +59,7 @@ postLongDistanceTransfersR = do
 
   _ <- fromMaybeM (error "Could not create the transfer: DB error")
        $ runDB $ insertUnique
-       $ LongDistanceTransfer
+       $ RemoteTransfer
          (recordingUID req)
          (recipientKeyFingerprint req)
          (recordingNameCipher req)

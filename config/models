@@ -43,13 +43,13 @@ PlaybackGrant
   deriving Show
 
 -- | A recording that is temporarily stored by rumuki with the intent to be pulled
--- by the recipient device. All LongDistanceTransfers have a TTL of one week.
-LongDistanceTransfer
+-- by the recipient device. All RemoteTransfers have a TTL of one week.
+RemoteTransfer
   recordingUID Text
   recipientKeyFingerprint ByteString
   recordingNameCipher ByteString
   senderKeyFingerprintCipher ByteString
   keyCipher ByteString
   created UTCTime default=now()
-  UniqueLongDistanceTransfer recordingUID
+  UniqueRemoteTransfer recordingUID
  deriving Show

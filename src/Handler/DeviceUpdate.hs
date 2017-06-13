@@ -1,10 +1,10 @@
 module Handler.DeviceUpdate (postDeviceUpdateR) where
 
 import           Data.Aeson
-import           Data.Time.Clock            (getCurrentTime)
+import           Data.Time.Clock      (getCurrentTime)
 import           Import
-import           Model.LongDistanceTransfer (longDistanceTransferObjectURL)
-import           Model.PlaybackGrant        ()
+import           Model.PlaybackGrant  ()
+import           Model.RemoteTransfer (remoteTransferObjectURL)
 
 data GETRequest = GETRequest [Text] ByteString
 
@@ -27,21 +27,21 @@ postDeviceUpdateR = do
 
   detections <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
   grants <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
-  transfers' <- runDB $ selectList [ LongDistanceTransferRecipientKeyFingerprint ==. keyFingerprint ] []
+  transfers' <- runDB $ selectList [ RemoteTransferRecipientKeyFingerprint ==. keyFingerprint ] []
   transfers <- filterExistingTransfers . fmap entityVal $ transfers'
 
   sendResponseStatus status200 $ object [ "playbackGrants"          .= grants
                                         , "screenCaptureDetections" .= detections
-                                        , "longDistanceTransfers"   .= transfers ]
+                                        , "remoteTransfers"   .= transfers ]
 
 -- | Given a list of long distance transfers, filters out any transfers that either
 -- no longer exist, or are incompletely uploaded.
-filterExistingTransfers :: [LongDistanceTransfer] -> Handler [LongDistanceTransfer]
+filterExistingTransfers :: [RemoteTransfer] -> Handler [RemoteTransfer]
 filterExistingTransfers transfers = do
   httpClient <- appHttpClient <$> getYesod
   gcAuthorizer <- appGoogleCloudAuthorizer <$> getYesod
   fmap catMaybes $ sequenceA $ flip fmap transfers $ \t -> do
-    objectURL <- longDistanceTransferObjectURL t
+    objectURL <- remoteTransferObjectURL t
     request <- parseRequest ("GET " ++ objectURL) >>= liftIO . gcAuthorizer
     response <- liftIO $ httpClient request
     bool (return Nothing) (return $ Just t) $ responseStatus response == status200

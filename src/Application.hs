@@ -25,10 +25,10 @@ import           Handler.DeviceUpdate
 import           Handler.Feedback
 import           Handler.Health
 import           Handler.Home
-import           Handler.LongDistanceTransfer
-import           Handler.LongDistanceTransfers
 import           Handler.PlaybackGrant
 import           Handler.PlaybackGrants
+import           Handler.RemoteTransfer
+import           Handler.RemoteTransfers
 import           Handler.ScreenCaptureDetections
 import           Handler.Subscribers
 import           Import

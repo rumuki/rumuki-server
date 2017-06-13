@@ -5,8 +5,8 @@
 /api/feedback FeedbackR POST
 /api/health HealthR GET
 /api/healthz HealthzR GET
-/api/long-distance-transfer LongDistanceTransfersR POST
-/api/long-distance-transfer/#Text LongDistanceTransferR GET DELETE
+/api/remote-transfer RemoteTransfersR POST
+/api/remote-transfer/#Text RemoteTransferR GET DELETE
 /api/recording/#Text/playback-grant PlaybackGrantsR POST GET DELETE
 /api/recording/#Text/playback-grant/#PlaybackGrantId PlaybackGrantR GET
 /api/screen-capture-detection ScreenCaptureDetectionsR POST

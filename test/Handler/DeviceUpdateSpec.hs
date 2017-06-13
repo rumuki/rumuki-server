@@ -51,12 +51,12 @@ spec = do
 
       it "returns the long distance transfers list" $ do
         device@(Entity _ d) <- makeDevice
-        _ <- runDB $ factoryLongDistanceTransfer
-             $ \t -> t { longDistanceTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        _ <- runDB $ factoryRemoteTransfer
+             $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
         makeRequest device
         statusIs 200
         responseSatisfies "includes the long distance transfer" $ \(Object v) ->
-          let (Array transfers) = v ! "longDistanceTransfers"
+          let (Array transfers) = v ! "remoteTransfers"
           in length transfers == 1
 
   withAppAndMockResponder (makeMockResponder $ \r -> r { responseStatus = status404 }) $ do
@@ -65,12 +65,12 @@ spec = do
 
       it "returns an empty long distance transfers list" $ do
         device@(Entity _ d) <- makeDevice
-        _ <- runDB $ factoryLongDistanceTransfer
-             $ \t -> t { longDistanceTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        _ <- runDB $ factoryRemoteTransfer
+             $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
         makeRequest device
         statusIs 200
         responseSatisfies "doesn't include the long distance transfer" $ \(Object v) ->
-          let (Array transfers) = v ! "longDistanceTransfers"
+          let (Array transfers) = v ! "remoteTransfers"
           in length transfers == 0
 
   where

@@ -1,4 +1,4 @@
-module Handler.LongDistanceTransfersSpec
+module Handler.RemoteTransfersSpec
        (spec) where
 
 import qualified Data.ByteString.Lazy         as LB
@@ -10,7 +10,7 @@ spec :: Spec
 spec = withAppAndMockResponder mockResponder $ testPost
 
 testPost :: SpecWith (TestApp App)
-testPost = describe "postLongDistanceTransfers" $ do
+testPost = describe "postRemoteTransfers" $ do
 
   it "returns the upload url" $ do
     makeRequest
@@ -20,14 +20,14 @@ testPost = describe "postLongDistanceTransfers" $ do
       in u == decodeUtf8 responseLocation
 
   it "handles recording UID conflicts" $ do
-    _ <- runDB $ factoryLongDistanceTransfer id
+    _ <- runDB $ factoryRemoteTransfer id
     makeRequest
     statusIs 400
 
   where
     recordingUID = "recording123"
     makeRequest = requestJSON $ do
-      setUrl LongDistanceTransfersR
+      setUrl RemoteTransfersR
       setMethod "POST"
       setRequestBody $ encode $
         object [ "recordingUID"               .= (recordingUID :: Text)
