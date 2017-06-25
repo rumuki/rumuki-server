@@ -26,13 +26,13 @@ postDeviceUpdateR = do
     _ -> return ()
 
   detections <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
-  grants <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
+  grants     <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
   transfers' <- runDB $ selectList [ RemoteTransferRecipientKeyFingerprint ==. keyFingerprint ] []
-  transfers <- filterExistingTransfers . fmap entityVal $ transfers'
+  transfers  <- filterExistingTransfers . fmap entityVal $ transfers'
 
   sendResponseStatus status200 $ object [ "playbackGrants"          .= grants
                                         , "screenCaptureDetections" .= detections
-                                        , "remoteTransfers"   .= transfers ]
+                                        , "remoteTransfers"         .= transfers ]
 
 -- | Given a list of long distance transfers, filters out any transfers that either
 -- no longer exist, or are incompletely uploaded.
