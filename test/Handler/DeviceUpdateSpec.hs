@@ -49,13 +49,13 @@ spec = do
 
     describe "postDeviceUpdateR (GCS object exists)" $ do
 
-      it "returns the long distance transfers list" $ do
+      it "returns the remote transfers list" $ do
         device@(Entity _ d) <- makeDevice
         _ <- runDB $ factoryRemoteTransfer
              $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
         makeRequest device
         statusIs 200
-        responseSatisfies "includes the long distance transfer" $ \(Object v) ->
+        responseSatisfies "includes the remote transfer" $ \(Object v) ->
           let (Array transfers) = v ! "remoteTransfers"
           in length transfers == 1
 
@@ -63,13 +63,13 @@ spec = do
 
     describe "postDeviceUpdateR (GCS object doesn't exist)" $ do
 
-      it "returns an empty long distance transfers list" $ do
+      it "returns an empty remote transfers list" $ do
         device@(Entity _ d) <- makeDevice
         _ <- runDB $ factoryRemoteTransfer
              $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
         makeRequest device
         statusIs 200
-        responseSatisfies "doesn't include the long distance transfer" $ \(Object v) ->
+        responseSatisfies "doesn't include the remote transfer" $ \(Object v) ->
           let (Array transfers) = v ! "remoteTransfers"
           in length transfers == 0
 
