@@ -47,6 +47,6 @@ factoryRemoteTransfer :: (MonadIO m, SqlBackend ~ backend)
                             -> ReaderT backend m (Entity RemoteTransfer)
 factoryRemoteTransfer transform = do
   now <- liftIO getCurrentTime
-  let transfer = transform $ RemoteTransfer "recording123" "" "" "" "" now
+  let transfer = transform $ RemoteTransfer "recording123" "" "" "" "" Nothing now
   tid <- insert transfer
   return $ Entity tid transfer

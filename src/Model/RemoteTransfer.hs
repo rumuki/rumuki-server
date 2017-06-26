@@ -1,9 +1,11 @@
 module Model.RemoteTransfer ( remoteTransferObjectURL
                             , remoteTransferObjectURLFromRecordingUID
                             , remoteTransferPublicURL
-                            , remoteTransferPublicURLFromRecordingUID ) where
+                            , remoteTransferPublicURLFromRecordingUID
+                            , RemoteTransferView (..)) where
 
 import           Data.Aeson
+import qualified Data.HashMap.Strict as H
 import           Import
 
 instance ToJSON (Entity RemoteTransfer) where
@@ -16,6 +18,15 @@ instance ToJSON RemoteTransfer where
     , "senderKeyFingerprintCipher" .= remoteTransferSenderKeyFingerprintCipher t
     , "keyCipher"                  .= remoteTransferKeyCipher t
     , "created"                    .= remoteTransferCreated t ]
+
+data RemoteTransferView = RemoteTransferView
+                          RemoteTransfer
+                          String
+
+instance ToJSON RemoteTransferView where
+  toJSON (RemoteTransferView remoteTransfer downloadURL) =
+    Object $ H.insert "downloadURL" (String $ pack downloadURL) o
+    where Object o = toJSON remoteTransfer
 
 remoteTransferObjectURL :: RemoteTransfer -> Handler String
 remoteTransferObjectURL t =

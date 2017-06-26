@@ -23,6 +23,14 @@ testGet = do
         setMethod "GET"
       statusIs 200
 
+    it "updates the seen status of the remote transfer" $ do
+      Entity _ t <- runDB $ factoryRemoteTransfer id
+      requestJSON $ do
+        setUrl $ RemoteTransferR $ remoteTransferRecordingUID t
+        setMethod "GET"
+      unseenTransfers <- runDB $ selectList [RemoteTransferSeen ==. Nothing] []
+      assertEq "no unseen transfers" 0 $ length unseenTransfers
+
   withAppAndMockResponder (mkResponder "GET" $ \r -> r { responseStatus = status404 })
     $ describe "getRemoteTransfer (object doesn't exist)" $ do
 

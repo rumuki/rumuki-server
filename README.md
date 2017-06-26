@@ -109,13 +109,6 @@ HTTP/1.1 204 No Content
 ```javascript
 { recordingUIDs: [<string>]
 , deviceKeyFingerprint: <base64>
-, remoteTransfers:
-    [{ recordingUID: <string>
-     , recordingNameCipher: <base64>
-     , senderKeyFingerprintCipher: <base64>
-     , keyCipher: <base64>
-     , created: <time>
-    }]
 }
 ```
 
@@ -132,6 +125,14 @@ HTTP/1.1 204 No Content
 , screenCaptureDetections:
     [{ affectedDeviceKeyFingerprint: <base64>
     ,  recordingUID: <string>
+    }]
+, remoteTransfers:
+    [{ recordingUID: <string>
+     , recordingNameCipher: <base64>
+     , senderKeyFingerprintCipher: <base64>
+     , downloadURL: <string>
+     , keyCipher: <base64>
+     , created: <time>
     }]
 }
 ```
@@ -204,9 +205,9 @@ HTTP/1.1 200 OK
    , recordingNameCipher: <base64>
    , senderKeyFingerprintCipher: <base64>
    , keyCipher: <base64>
+   , downloadURL: <string>
    , created: <time>
    ]
-, downloadURL: <string>
 }
 ```
 

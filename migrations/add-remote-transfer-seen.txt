@@ -1,0 +1,5 @@
+Depends: add-model-remote-transfer
+Apply: |
+  ALTER TABLE "remote_transfer"
+  ADD COLUMN "seen" TIMESTAMP
+  WITH TIME ZONE NULL;

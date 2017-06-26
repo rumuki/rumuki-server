@@ -1,10 +1,12 @@
 module Handler.DeviceUpdate (postDeviceUpdateR) where
 
 import           Data.Aeson
-import           Data.Time.Clock      (getCurrentTime)
+import           Data.Time.Clock      (addUTCTime, getCurrentTime)
 import           Import
 import           Model.PlaybackGrant  ()
-import           Model.RemoteTransfer (remoteTransferObjectURL)
+import           Model.RemoteTransfer (RemoteTransferView (..),
+                                       remoteTransferObjectURL,
+                                       remoteTransferPublicURL)
 
 data GETRequest = GETRequest [Text] ByteString
 
@@ -25,16 +27,34 @@ postDeviceUpdateR = do
     Just (Entity did _) -> runDB $ update did [DeviceUpdated =. Just now]
     _ -> return ()
 
-  detections <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
-  grants     <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
-  transfers' <- runDB $ selectList [ RemoteTransferRecipientKeyFingerprint ==. keyFingerprint ] []
-  transfers  <- filterExistingTransfers . fmap entityVal $ transfers'
+  detections  <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
+  grants      <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
+  transfers'  <- runDB $ selectList [ RemoteTransferRecipientKeyFingerprint ==. keyFingerprint ] []
+  transfers'' <- filterExistingTransfers . fmap entityVal $ transfers'
 
-  sendResponseStatus status200 $ object [ "playbackGrants"          .= grants
-                                        , "screenCaptureDetections" .= detections
-                                        , "remoteTransfers"         .= transfers ]
+  let transfers = filterStaleTransfers now transfers''
+  -- Update the seen property of each of the remote transfers:
+  _ <- sequenceA
+       $ map (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])
+       $ filter (isNothing . remoteTransferSeen . entityVal) transfers'
 
--- | Given a list of long distance transfers, filters out any transfers that either
+  transferViews <- (flip mapM) transfers $ \t -> do
+    url <- remoteTransferPublicURL t
+    return $ RemoteTransferView t url
+
+  sendResponseStatus status200 $ object [
+      "playbackGrants"          .= grants
+    , "screenCaptureDetections" .= detections
+    , "remoteTransfers"         .= transferViews ]
+
+-- | Given a list of remote transfers, filters out any transfers that have been
+-- seen more than one week ago.
+filterStaleTransfers :: UTCTime -> [RemoteTransfer] -> [RemoteTransfer]
+filterStaleTransfers now = filter
+  $ ((weekAgo <) . fromMaybe now . remoteTransferSeen)
+  where weekAgo = addUTCTime (60 * 60 * 24 * 7 * (-1)) now
+
+-- | Given a list of remote transfers, filters out any transfers that either
 -- no longer exist, or are incompletely uploaded.
 filterExistingTransfers :: [RemoteTransfer] -> Handler [RemoteTransfer]
 filterExistingTransfers transfers = do

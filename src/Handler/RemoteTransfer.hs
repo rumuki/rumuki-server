@@ -1,24 +1,26 @@
 module Handler.RemoteTransfer where
 
 import           Import
-import           Model.RemoteTransfer (remoteTransferObjectURL,
+import           Model.RemoteTransfer (RemoteTransferView (..),
+                                       remoteTransferObjectURL,
                                        remoteTransferObjectURLFromRecordingUID,
                                        remoteTransferPublicURL)
 
 getRemoteTransferR :: Text -> Handler Value
 getRemoteTransferR ruid = do
   app <- getYesod
-  Entity _ transfer <- fromMaybeM notFound $ runDB $ getBy (UniqueRemoteTransfer ruid)
+  Entity transferID transfer <- fromMaybeM notFound $ runDB $ getBy (UniqueRemoteTransfer ruid)
   objectURL <- remoteTransferObjectURL transfer
   publicURL <- remoteTransferPublicURL transfer
+  now <- liftIO getCurrentTime
 
   request <- parseRequest ("GET " ++ objectURL) >>= liftIO . appGoogleCloudAuthorizer app
   response <- liftIO . appHttpClient app $ request
   when (responseStatus response /= status200) $ notFound
+  _ <- runDB $ update transferID [RemoteTransferSeen =. Just now]
 
   sendResponseStatus status200 $ object [
-      "remoteTransfer" .= transfer
-    , "downloadURL" .= publicURL ]
+      "remoteTransfer" .= RemoteTransferView transfer publicURL ]
 
 deleteRemoteTransferR :: Text -> Handler Value
 deleteRemoteTransferR ruid = do

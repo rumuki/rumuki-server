@@ -11,7 +11,6 @@ import           TestImport
 spec :: Spec
 spec = do
 
-
   withApp $ do
 
     describe "postDeviceUpdateR" $ do
@@ -52,12 +51,35 @@ spec = do
       it "returns the remote transfers list" $ do
         device@(Entity _ d) <- makeDevice
         _ <- runDB $ factoryRemoteTransfer
-             $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+          $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
         makeRequest device
         statusIs 200
         responseSatisfies "includes the remote transfer" $ \(Object v) ->
           let (Array transfers) = v ! "remoteTransfers"
           in length transfers == 1
+
+      it "sets the seen property on the remote transfer" $ do
+        device@(Entity _ d) <- makeDevice
+        _ <- runDB $ factoryRemoteTransfer
+          $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        makeRequest device
+        statusIs 200
+        unseenRemoteTransfers <- runDB $ selectList  [ RemoteTransferSeen ==. Nothing ] []
+        assertEq "All remote transfers are now seen" 0 (length unseenRemoteTransfers)
+
+      it "sets the downloadURL on the remote transfer" $ do
+        device@(Entity _ d) <- makeDevice
+        _ <- runDB $ factoryRemoteTransfer
+          $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        makeRequest device
+        statusIs 200
+        body <- withResponse $ return . simpleBody
+        let maybeDecoded = decode body :: Maybe Value
+        let maybeURL = parseMaybe parseDownloadURL =<< maybeDecoded
+        liftIO $ print maybeURL
+        assertEq "downloadURL as expected"
+          (Just "https://rumuki.storage.googleapis.com/recording123")
+          maybeURL
 
   withAppAndMockResponder (makeMockResponder $ \r -> r { responseStatus = status404 }) $ do
 
@@ -70,8 +92,7 @@ spec = do
         makeRequest device
         statusIs 200
         responseSatisfies "doesn't include the remote transfer" $ \(Object v) ->
-          let (Array transfers) = v ! "remoteTransfers"
-          in length transfers == 0
+          let (Array transfers) = v ! "remoteTransfers" in length transfers == 0
 
   where
     recordingUID = "recording123"
@@ -83,3 +104,9 @@ spec = do
       setMethod "POST"
       setRequestBody $ encode $ object [ "recordingUIDs" .= ([recordingUID] :: [Text])
                                        , "deviceKeyFingerprint" .= deviceKeyFingerprint d ]
+    parseDownloadURL :: Value -> Parser Text
+    parseDownloadURL = withObject "response" $ \o -> do
+      transfers <- o .: "remoteTransfers"
+      let firstTransfer = V.head transfers
+      url <- firstTransfer .: "downloadURL"
+      withText "url" return $ url

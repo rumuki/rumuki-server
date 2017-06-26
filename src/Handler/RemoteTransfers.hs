@@ -65,6 +65,7 @@ postRemoteTransfersR = do
          (recordingNameCipher req)
          (senderKeyFingerprintCipher req)
          (keyCipher req)
+         Nothing
          now
 
   sendResponseStatus status200 $ object [ "uploadURL" .= decodeUtf8 location ]
