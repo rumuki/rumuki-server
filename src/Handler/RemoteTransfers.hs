@@ -9,7 +9,7 @@ data POSTRemoteTransfersRequest =
   POSTRemoteTransfersRequest { recordingUID :: Text
                                    , recipientKeyFingerprint :: ByteString
                                    , recordingNameCipher :: ByteString
-                                   , senderKeyFingerprintCipher :: ByteString
+                                   , senderPublicKeyCipher :: ByteString
                                    , keyCipher :: ByteString
                                    }
 
@@ -19,7 +19,7 @@ instance FromJSON POSTRemoteTransfersRequest where
     <$> o .: "recordingUID"
     <*> o .: "recipientKeyFingerprint"
     <*> o .: "recordingNameCipher"
-    <*> o .: "senderKeyFingerprintCipher"
+    <*> o .: "senderPublicKeyCipher"
     <*> o .: "keyCipher"
 
 postRemoteTransfersR :: Handler Value
@@ -63,7 +63,7 @@ postRemoteTransfersR = do
          (recordingUID req)
          (recipientKeyFingerprint req)
          (recordingNameCipher req)
-         (senderKeyFingerprintCipher req)
+         (senderPublicKeyCipher req)
          (keyCipher req)
          Nothing
          now

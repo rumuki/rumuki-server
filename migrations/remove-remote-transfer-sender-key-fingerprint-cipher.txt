@@ -1,0 +1,4 @@
+Depends: add-model-remote-transfer
+Apply: |
+  TRUNCATE "remote_transfer";
+  ALTER TABLE "remote_transfer" DROP COLUMN "sender_key_fingerprint_cipher";

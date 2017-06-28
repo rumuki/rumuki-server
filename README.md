@@ -129,7 +129,7 @@ HTTP/1.1 204 No Content
 , remoteTransfers:
     [{ recordingUID: <string>
      , recordingNameCipher: <base64>
-     , senderKeyFingerprintCipher: <base64>
+     , senderPublicKeyCipher: <base64>
      , downloadURL: <string>
      , keyCipher: <base64>
      , created: <time>
@@ -175,7 +175,7 @@ Content-Type: application/json
 { recordingUID: <string>
 , recipientKeyFingerprint: <base64>
 , recordingNameCipher: <base64>
-, senderKeyFingerprintCipher: <base64>
+, senderPublicKeyCipher: <base64>
 , keyCipher: <base64>
 }
 ```
@@ -203,7 +203,7 @@ HTTP/1.1 200 OK
 { remoteTransfer:
    { recordingUID: <string>
    , recordingNameCipher: <base64>
-   , senderKeyFingerprintCipher: <base64>
+   , senderPublicKeyCipher: <base64>
    , keyCipher: <base64>
    , downloadURL: <string>
    , created: <time>

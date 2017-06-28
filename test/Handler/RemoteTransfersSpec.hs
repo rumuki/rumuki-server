@@ -33,7 +33,7 @@ testPost = describe "postRemoteTransfers" $ do
         object [ "recordingUID"               .= (recordingUID :: Text)
                , "recipientKeyFingerprint"    .= ("recipientkeyfingerprint" :: ByteString)
                , "recordingNameCipher"        .= ("recordingnameciphertext" :: ByteString)
-               , "senderKeyFingerprintCipher" .= ("senderkeyfingerprintcipher" :: ByteString)
+               , "senderPublicKeyCipher"      .= ("senderpublickeycipher" :: ByteString)
                , "keyCipher"                  .= ("keycipher" :: ByteString) ]
 
 responseLocation :: ByteString

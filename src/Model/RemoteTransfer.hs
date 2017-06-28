@@ -13,11 +13,11 @@ instance ToJSON (Entity RemoteTransfer) where
 
 instance ToJSON RemoteTransfer where
   toJSON t = object [
-      "recordingUID"               .= remoteTransferRecordingUID t
-    , "recordingNameCipher"        .= remoteTransferRecordingNameCipher t
-    , "senderKeyFingerprintCipher" .= remoteTransferSenderKeyFingerprintCipher t
-    , "keyCipher"                  .= remoteTransferKeyCipher t
-    , "created"                    .= remoteTransferCreated t ]
+      "recordingUID"          .= remoteTransferRecordingUID t
+    , "recordingNameCipher"   .= remoteTransferRecordingNameCipher t
+    , "senderPublicKeyCipher" .= remoteTransferSenderPublicKeyCipher t
+    , "keyCipher"             .= remoteTransferKeyCipher t
+    , "created"               .= remoteTransferCreated t ]
 
 data RemoteTransferView = RemoteTransferView
                           RemoteTransfer

@@ -48,7 +48,7 @@ RemoteTransfer
   recordingUID Text
   recipientKeyFingerprint ByteString
   recordingNameCipher ByteString
-  senderKeyFingerprintCipher ByteString
+  senderPublicKeyCipher ByteString
   keyCipher ByteString
   seen UTCTime Maybe
   created UTCTime default=now()
