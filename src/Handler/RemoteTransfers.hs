@@ -1,17 +1,19 @@
 module Handler.RemoteTransfers where
 
-import           Data.Aeson          (withObject)
+import           Data.Aeson             (withObject)
 import           Data.Time.Clock
 import           Import
-import           Network.HTTP.Simple (getResponseHeader)
+import           Model.Device
+import           Model.PushNotification (forkAndSendPushNotificationI)
+import           Network.HTTP.Simple    (getResponseHeader)
 
 data POSTRemoteTransfersRequest =
   POSTRemoteTransfersRequest { recordingUID :: Text
-                                   , recipientKeyFingerprint :: ByteString
-                                   , recordingNameCipher :: ByteString
-                                   , senderPublicKeyCipher :: ByteString
-                                   , keyCipher :: ByteString
-                                   }
+                             , recipientKeyFingerprint :: ByteString
+                             , recordingNameCipher :: ByteString
+                             , senderPublicKeyCipher :: ByteString
+                             , keyCipher :: ByteString
+                             }
 
 instance FromJSON POSTRemoteTransfersRequest where
   parseJSON = withObject "transfer request object" $ \o ->
@@ -67,5 +69,15 @@ postRemoteTransfersR = do
          (keyCipher req)
          Nothing
          now
+
+  -- Fire a push notification
+  devices <- runDB $ selectList [DeviceKeyFingerprint ==. recipientKeyFingerprint req] []
+  _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
+    outstandingGrantsCount <- countUnseenPlaybackGrants device
+    outstandingRecordingsCount <- countUnseenRecordings device
+    forkAndSendPushNotificationI
+      MsgNewRemoteRecordingReceived
+      (outstandingGrantsCount + outstandingRecordingsCount)
+      device
 
   sendResponseStatus status200 $ object [ "uploadURL" .= decodeUtf8 location ]

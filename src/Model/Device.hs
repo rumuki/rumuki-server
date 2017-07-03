@@ -1,4 +1,5 @@
-module Model.Device (countUnseenPlaybackGrants) where
+module Model.Device ( countUnseenPlaybackGrants
+                    , countUnseenRecordings ) where
 
 import           Data.Time.Clock
 import           Import
@@ -10,3 +11,8 @@ countUnseenPlaybackGrants device = do
   runDB $ count [ PlaybackGrantExpires >. now
                 , PlaybackGrantRecipientKeyFingerprint ==. deviceKeyFingerprint device
                 , PlaybackGrantCreated >. inferredLastAccess ]
+
+countUnseenRecordings :: Device -> Handler Int
+countUnseenRecordings device =
+  runDB $ count [ RemoteTransferSeen ==. Nothing
+                , RemoteTransferRecipientKeyFingerprint ==. deviceKeyFingerprint device ]

@@ -25,5 +25,9 @@ postScreenCaptureDetectionsR = do
       (UniqueScreenCaptureDetection kf recordingUID)
       (ScreenCaptureDetection kf recordingUID) []
     outstandingGrantsCount <- countUnseenPlaybackGrants device
-    forkAndSendPushNotificationI MsgScreenCaptureDetected (max 1 outstandingGrantsCount) device
+    outstandingRecordingsCount <- countUnseenRecordings device
+    forkAndSendPushNotificationI
+      MsgScreenCaptureDetected
+      (max 1 (outstandingGrantsCount + outstandingRecordingsCount))
+      device
   sendResponseStatus status201 emptyResponse

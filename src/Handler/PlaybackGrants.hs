@@ -41,7 +41,11 @@ postPlaybackGrantsR recordingUID = do
   devices <- runDB $ selectList [DeviceKeyFingerprint ==. recipientKeyFingerprint req] []
   _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
     outstandingGrantsCount <- countUnseenPlaybackGrants device
-    forkAndSendPushNotificationI MsgNewPlaybackGrantReceived outstandingGrantsCount device
+    outstandingRecordingsCount <- countUnseenRecordings device
+    forkAndSendPushNotificationI
+      MsgNewPlaybackGrantReceived
+      (outstandingGrantsCount + outstandingRecordingsCount)
+      device
 
   sendResponseStatus status201 $ object ["playbackGrant" .= (Entity pgid pg)]
 
