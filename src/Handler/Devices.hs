@@ -1,7 +1,8 @@
 module Handler.Devices where
 
-import           Data.Aeson      (withObject, (.:?))
-import           Data.Time.Clock (getCurrentTime)
+import           Data.Aeson        (withObject, (.:?))
+import           Data.Time.Clock   (getCurrentTime)
+import           Handler.Extension
 import           Import
 
 data CreateDeviceRequest = CreateDeviceRequest
@@ -29,7 +30,7 @@ postDevicesR = do
   _ <- runDB $ upsertBy
     (UniqueDeviceToken deviceToken)
     (Device deviceToken keyFingerprint mApnToken (Just now) mPreferredLocalization) []
-  sendResponseStatus status201 ()
+  sendResponseStatus status201 emptyResponse
 
 data DeleteDeviceRequest = DeleteDeviceRequest Text [Text]
 
@@ -44,4 +45,4 @@ deleteDevicesR = do
   DeleteDeviceRequest deviceToken recordingUIDs <- requireJsonBody
   _ <- sequence $ map (runDB . deleteWhere . (:[]) . (==.) PlaybackGrantRecordingUID) recordingUIDs
   runDB $ deleteBy $ UniqueDeviceToken deviceToken
-  sendResponseStatus status204 ()
+  sendResponseStatus status204 emptyResponse

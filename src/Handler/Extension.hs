@@ -5,6 +5,7 @@ module Handler.Extension
        , noWhitelist
        , whitelist
        , fromMaybeM
+       , emptyResponse
        ) where
 
 import           Data.Aeson              as A
@@ -58,3 +59,6 @@ fromMaybeM e h = do
   case h' of
     Just a -> return a
     Nothing -> e
+
+emptyResponse :: Value
+emptyResponse = object []

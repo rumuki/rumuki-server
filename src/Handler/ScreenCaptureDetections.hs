@@ -2,6 +2,7 @@ module Handler.ScreenCaptureDetections (
   postScreenCaptureDetectionsR) where
 
 import           Data.Aeson
+import           Handler.Extension
 import           Import
 import           Model.Device
 import           Model.PushNotification
@@ -25,4 +26,4 @@ postScreenCaptureDetectionsR = do
       (ScreenCaptureDetection kf recordingUID) []
     outstandingGrantsCount <- countUnseenPlaybackGrants device
     forkAndSendPushNotificationI MsgScreenCaptureDetected (max 1 outstandingGrantsCount) device
-  sendResponseStatus status201 ()
+  sendResponseStatus status201 emptyResponse

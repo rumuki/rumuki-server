@@ -2,6 +2,7 @@ module Handler.PlaybackGrants where
 
 import           Data.Aeson
 import           Data.Time.Clock
+import           Handler.Extension
 import           Import
 import           Model.Device
 import           Model.PlaybackGrant    ()
@@ -57,4 +58,4 @@ getPlaybackGrantsR recordingUid = do
 deletePlaybackGrantsR :: Text -> Handler Value
 deletePlaybackGrantsR recordingUid = do
   runDB $ deleteWhere [ PlaybackGrantRecordingUID ==. recordingUid ]
-  sendResponseStatus status204 ()
+  sendResponseStatus status204 emptyResponse
