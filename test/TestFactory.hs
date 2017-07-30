@@ -2,12 +2,12 @@ module TestFactory ( factoryDevice
                    , factoryPlaybackGrant
                    , factoryRemoteTransfer ) where
 
-import ClassyPrelude
-import System.Entropy
-import Database.Persist
-import Model
-import Data.Time.Clock
-import Database.Persist.Sql (SqlBackend)
+import           ClassyPrelude
+import           Data.Time.Clock
+import           Database.Persist
+import           Database.Persist.Sql (SqlBackend)
+import           Model
+import           System.Entropy
 
 factoryDevice :: (MonadIO m, SqlBackend ~ backend)
                => (Device -> Device) -- ^ Chance to manipulate the device
@@ -47,6 +47,6 @@ factoryRemoteTransfer :: (MonadIO m, SqlBackend ~ backend)
                             -> ReaderT backend m (Entity RemoteTransfer)
 factoryRemoteTransfer transform = do
   now <- liftIO getCurrentTime
-  let transfer = transform $ RemoteTransfer "recording123" "" "" "" "" Nothing now
+  let transfer = transform $ RemoteTransfer "recording123" "" "" "" "" "" Nothing now
   tid <- insert transfer
   return $ Entity tid transfer

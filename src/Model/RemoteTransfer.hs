@@ -16,6 +16,7 @@ instance ToJSON RemoteTransfer where
       "recordingUID"          .= remoteTransferRecordingUID t
     , "recordingNameCipher"   .= remoteTransferRecordingNameCipher t
     , "senderPublicKeyCipher" .= remoteTransferSenderPublicKeyCipher t
+    , "senderNicknameCipher"  .= remoteTransferSenderNicknameCipher t
     , "keyCipher"             .= remoteTransferKeyCipher t
     , "created"               .= remoteTransferCreated t ]
 

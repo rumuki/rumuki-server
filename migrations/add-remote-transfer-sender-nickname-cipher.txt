@@ -1,0 +1,5 @@
+Depends: add-model-remote-transfer
+Apply: |
+  ALTER TABLE "remote_transfer"
+  ADD COLUMN "sender_nickname_cipher"
+  BYTEA NOT NULL;

@@ -12,6 +12,7 @@ data POSTRemoteTransfersRequest =
                              , recipientKeyFingerprint :: ByteString
                              , recordingNameCipher :: ByteString
                              , senderPublicKeyCipher :: ByteString
+                             , senderNicknameCipher :: ByteString
                              , keyCipher :: ByteString
                              }
 
@@ -22,6 +23,7 @@ instance FromJSON POSTRemoteTransfersRequest where
     <*> o .: "recipientKeyFingerprint"
     <*> o .: "recordingNameCipher"
     <*> o .: "senderPublicKeyCipher"
+    <*> o .: "senderNicknameCipher"
     <*> o .: "keyCipher"
 
 postRemoteTransfersR :: Handler Value
@@ -66,6 +68,7 @@ postRemoteTransfersR = do
          (recipientKeyFingerprint req)
          (recordingNameCipher req)
          (senderPublicKeyCipher req)
+         (senderNicknameCipher req)
          (keyCipher req)
          Nothing
          now
