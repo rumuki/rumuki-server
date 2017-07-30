@@ -45,4 +45,4 @@ deleteDevicesR = do
   DeleteDeviceRequest deviceToken recordingUIDs <- requireJsonBody
   _ <- sequence $ map (runDB . deleteWhere . (:[]) . (==.) PlaybackGrantRecordingUID) recordingUIDs
   runDB $ deleteBy $ UniqueDeviceToken deviceToken
-  sendResponseStatus status204 emptyResponse
+  sendResponseStatus status204 ()

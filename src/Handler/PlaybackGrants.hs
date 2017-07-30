@@ -58,4 +58,4 @@ getPlaybackGrantsR recordingUid = do
 deletePlaybackGrantsR :: Text -> Handler Value
 deletePlaybackGrantsR recordingUid = do
   runDB $ deleteWhere [ PlaybackGrantRecordingUID ==. recordingUid ]
-  sendResponseStatus status204 emptyResponse
+  sendResponseStatus status204 ()
