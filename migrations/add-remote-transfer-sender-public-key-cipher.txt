@@ -1,3 +1,6 @@
 Depends: remove-remote-transfer-sender-key-fingerprint-cipher
 Apply: |
-  ALTER TABLE "remote_transfer" ADD COLUMN "sender_public_key_cipher" BYTEA NOT NULL;
+  TRUNCATE "remote_transfer";
+  ALTER TABLE "remote_transfer"
+  ADD COLUMN "sender_public_key_cipher"
+  BYTEA NOT NULL;
