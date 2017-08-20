@@ -19,7 +19,7 @@ instance FromJSON GETRequest where
 postDeviceUpdateR :: Handler Value
 postDeviceUpdateR = do
   now <- liftIO getCurrentTime
-  GETRequest uids keyFingerprint <- requireJsonBody
+  GETRequest uids' keyFingerprint <- requireJsonBody
 
   -- Update the last updated value on the device:
   maybeDevice <- runDB $ selectFirst [ DeviceKeyFingerprint ==. keyFingerprint ] []
@@ -27,12 +27,15 @@ postDeviceUpdateR = do
     Just (Entity did _) -> runDB $ update did [DeviceUpdated =. Just now]
     _ -> return ()
 
-  detections  <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
-  grants      <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
   transfers'  <- runDB $ selectList [ RemoteTransferRecipientKeyFingerprint ==. keyFingerprint ] []
   transfers'' <- filterExistingTransfers . fmap entityVal $ transfers'
-
   let transfers = filterStaleTransfers now transfers''
+
+  -- Add the new remote transfer UIDs into the uids list
+  let uids = uids' ++ map remoteTransferRecordingUID transfers
+
+  detections  <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
+  grants      <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
   -- Update the seen property of each of the remote transfers:
   _ <- sequenceA
        $ map (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])

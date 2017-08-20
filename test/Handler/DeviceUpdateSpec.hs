@@ -49,28 +49,48 @@ spec = do
     describe "postDeviceUpdateR (GCS object exists)" $ do
 
       it "returns the remote transfers list" $ do
-        device@(Entity _ d) <- makeDevice
-        _ <- runDB $ factoryRemoteTransfer
-          $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        device <- makeDevice
+        _ <- makeRemoteTransfer device
         makeRequest device
         statusIs 200
         responseSatisfies "includes the remote transfer" $ \(Object v) ->
           let (Array transfers) = v ! "remoteTransfers"
           in length transfers == 1
 
-      it "sets the seen property on the remote transfer" $ do
+      it "returns any new playback grants on the remote transfers" $ do
         device@(Entity _ d) <- makeDevice
-        _ <- runDB $ factoryRemoteTransfer
-          $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        _ <- makeGrant device
+        _ <- makeRemoteTransfer device
+        makeRequest device
+
+        requestJSON $ do
+          setUrl $ DeviceUpdateR
+          setMethod "POST"
+          setRequestBody $
+            encode $
+            -- Empty recording uids so that we can test the grant still
+            -- appears properly.
+            object [ "recordingUIDs" .= ([] :: [Text])
+                   , "deviceKeyFingerprint" .= deviceKeyFingerprint d ]
+
+        statusIs 200
+        responseSatisfies "includes the remote transfer" $ \(Object v) ->
+          let (Array transfers) = v ! "remoteTransfers"
+              (Array grants) = v ! "playbackGrants"
+          in length transfers == 1 &&
+             length grants == 1
+
+      it "sets the seen property on the remote transfer" $ do
+        device <- makeDevice
+        _ <- makeRemoteTransfer device
         makeRequest device
         statusIs 200
         unseenRemoteTransfers <- runDB $ selectList  [ RemoteTransferSeen ==. Nothing ] []
         assertEq "All remote transfers are now seen" 0 (length unseenRemoteTransfers)
 
       it "sets the downloadURL on the remote transfer" $ do
-        device@(Entity _ d) <- makeDevice
-        _ <- runDB $ factoryRemoteTransfer
-          $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        device <- makeDevice
+        _ <- makeRemoteTransfer device
         makeRequest device
         statusIs 200
         body <- withResponse $ return . simpleBody
@@ -86,9 +106,8 @@ spec = do
     describe "postDeviceUpdateR (GCS object doesn't exist)" $ do
 
       it "returns an empty remote transfers list" $ do
-        device@(Entity _ d) <- makeDevice
-        _ <- runDB $ factoryRemoteTransfer
-             $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+        device <- makeDevice
+        _ <- makeRemoteTransfer device
         makeRequest device
         statusIs 200
         responseSatisfies "doesn't include the remote transfer" $ \(Object v) ->
@@ -99,6 +118,8 @@ spec = do
     makeMockResponder = mockGCResponder "/storage/v1/b/rumuki/o/recording123" "GET"
     makeDevice = runDB $ retrieve $ factoryDevice id
     makeGrant device = runDB $ factoryPlaybackGrant device $ \g -> g { playbackGrantRecordingUID = recordingUID }
+    makeRemoteTransfer (Entity _ d) = runDB $ factoryRemoteTransfer
+      $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
     makeRequest (Entity _ d) = requestJSON $ do
       setUrl $ DeviceUpdateR
       setMethod "POST"
