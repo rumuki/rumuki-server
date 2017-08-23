@@ -57,12 +57,20 @@ spec = do
           let (Array transfers) = v ! "remoteTransfers"
           in length transfers == 1
 
+      it "doesn't return the same list of remote transfers twice" $ do
+        device <- makeDevice
+        _ <- makeRemoteTransfer device
+        makeRequest device
+        makeRequest device
+        statusIs 200
+        responseSatisfies "no remote transfers" $ \(Object v) ->
+          let (Array transfers) = v ! "remoteTransfers"
+          in length transfers == 0
+
       it "returns any new playback grants on the remote transfers" $ do
         device@(Entity _ d) <- makeDevice
         _ <- makeGrant device
         _ <- makeRemoteTransfer device
-        makeRequest device
-
         requestJSON $ do
           setUrl $ DeviceUpdateR
           setMethod "POST"

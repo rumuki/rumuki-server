@@ -1,7 +1,7 @@
 module Handler.DeviceUpdate (postDeviceUpdateR) where
 
 import           Data.Aeson
-import           Data.Time.Clock      (addUTCTime, getCurrentTime)
+import           Data.Time.Clock      (getCurrentTime)
 import           Import
 import           Model.PlaybackGrant  ()
 import           Model.RemoteTransfer (RemoteTransferView (..),
@@ -18,6 +18,7 @@ instance FromJSON GETRequest where
 
 postDeviceUpdateR :: Handler Value
 postDeviceUpdateR = do
+  settings <- appSettings <$> getYesod
   now <- liftIO getCurrentTime
   GETRequest uids' keyFingerprint <- requireJsonBody
 
@@ -27,9 +28,9 @@ postDeviceUpdateR = do
     Just (Entity did _) -> runDB $ update did [DeviceUpdated =. Just now]
     _ -> return ()
 
-  transfers'  <- runDB $ selectList [ RemoteTransferRecipientKeyFingerprint ==. keyFingerprint ] []
-  transfers'' <- filterExistingTransfers . fmap entityVal $ transfers'
-  let transfers = filterStaleTransfers now transfers''
+  transfers'  <- runDB $ selectList [ RemoteTransferRecipientKeyFingerprint ==. keyFingerprint
+                                    , RemoteTransferSeen ==. Nothing ] []
+  transfers <- filterExistingTransfers . fmap entityVal $ transfers'
 
   -- Add the new remote transfer UIDs into the uids list
   let uids = uids' ++ map remoteTransferRecordingUID transfers
