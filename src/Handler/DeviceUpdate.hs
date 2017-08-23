@@ -42,7 +42,7 @@ postDeviceUpdateR = do
        $ filter (isNothing . remoteTransferSeen . entityVal) transfers'
 
   transferViews <- (flip mapM) transfers $ \t -> do
-    url <- remoteTransferPublicURL t
+    let url = remoteTransferPublicURL t settings
     return $ RemoteTransferView t url
 
   sendResponseStatus status200 $ object [
@@ -50,21 +50,15 @@ postDeviceUpdateR = do
     , "screenCaptureDetections" .= detections
     , "remoteTransfers"         .= transferViews ]
 
--- | Given a list of remote transfers, filters out any transfers that have been
--- seen more than one week ago.
-filterStaleTransfers :: UTCTime -> [RemoteTransfer] -> [RemoteTransfer]
-filterStaleTransfers now = filter
-  $ ((weekAgo <) . fromMaybe now . remoteTransferSeen)
-  where weekAgo = addUTCTime (60 * 60 * 24 * 7 * (-1)) now
-
 -- | Given a list of remote transfers, filters out any transfers that either
 -- no longer exist, or are incompletely uploaded.
 filterExistingTransfers :: [RemoteTransfer] -> Handler [RemoteTransfer]
 filterExistingTransfers transfers = do
+  settings <- appSettings <$> getYesod
   httpClient <- appHttpClient <$> getYesod
   gcAuthorizer <- appGoogleCloudAuthorizer <$> getYesod
   fmap catMaybes $ sequenceA $ flip fmap transfers $ \t -> do
-    objectURL <- remoteTransferObjectURL t
+    let objectURL = remoteTransferObjectURL t settings
     request <- parseRequest ("GET " ++ objectURL) >>= liftIO . gcAuthorizer
     response <- liftIO $ httpClient request
     bool (return Nothing) (return $ Just t) $ responseStatus response == status200

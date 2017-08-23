@@ -29,32 +29,24 @@ instance ToJSON RemoteTransferView where
     Object $ H.insert "downloadURL" (String $ pack downloadURL) o
     where Object o = toJSON remoteTransfer
 
-remoteTransferObjectURL :: RemoteTransfer -> Handler String
-remoteTransferObjectURL t =
-  remoteTransferObjectURLFromRecordingUID
+remoteTransferObjectURL :: RemoteTransfer -> AppSettings -> String
+remoteTransferObjectURL t = remoteTransferObjectURLFromRecordingUID
+                            $ remoteTransferRecordingUID t
+
+remoteTransferPublicURL :: RemoteTransfer -> AppSettings -> String
+remoteTransferPublicURL t = remoteTransferPublicURLFromRecordingUID
   $ remoteTransferRecordingUID t
 
-remoteTransferPublicURL :: RemoteTransfer -> Handler String
-remoteTransferPublicURL t =
-  remoteTransferPublicURLFromRecordingUID
-  $ remoteTransferRecordingUID t
+remoteTransferObjectURLFromRecordingUID :: Text -> AppSettings -> String
+remoteTransferObjectURLFromRecordingUID ruid settings =
+  "https://www.googleapis.com/storage/v1/b/"
+  ++ appGCSBucketName settings
+  ++ "/o/"
+  ++ unpack ruid
 
-remoteTransferObjectURLFromRecordingUID :: Text -> Handler String
-remoteTransferObjectURLFromRecordingUID ruid = do
-  app <- getYesod
-  let settings = appSettings app
-  return
-    $ "https://www.googleapis.com/storage/v1/b/"
-    ++ appGCSBucketName settings
-    ++ "/o/"
-    ++ unpack ruid
-
-remoteTransferPublicURLFromRecordingUID :: Text -> Handler String
-remoteTransferPublicURLFromRecordingUID ruid = do
-  app <- getYesod
-  let settings = appSettings app
-  return
-    $ "https://"
-    ++ appGCSBucketName settings
-    ++ ".storage.googleapis.com/"
-    ++ unpack ruid
+remoteTransferPublicURLFromRecordingUID :: Text -> AppSettings -> String
+remoteTransferPublicURLFromRecordingUID ruid settings =
+  "https://"
+  ++ appGCSBucketName settings
+  ++ ".storage.googleapis.com/"
+  ++ unpack ruid
