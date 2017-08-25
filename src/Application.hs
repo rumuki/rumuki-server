@@ -8,6 +8,7 @@ module Application
     , makeFoundation
     , makeLogWare
     , getApplicationRepl
+    , removeStaleObjects
     , shutdownApp
     , handler
     , db
@@ -58,6 +59,9 @@ import           Network.Wai.Middleware.RequestLogger  (Destination (Logger),
                                                         destination,
                                                         mkRequestLogger,
                                                         outputFormat)
+
+import           Model.RemoteTransfer                  (remoteTransferObjectURL)
+
 import           System.Log.FastLogger                 (defaultBufSize,
                                                         newStdoutLoggerSet,
                                                         pushLogStr,
@@ -183,20 +187,52 @@ appMain = do
     foundation <- makeFoundation settings
     -- Generate a WAI Application from the foundation
     app <- makeApplication foundation
-    -- Fork a background process that periodically removes
-    -- expired playback grants
-    _ <- forkIO $ removeExpiredPlaybackGrants foundation
+    -- Fork a background thread that periodically removes stale objects
+    let runBackgroundThread = removeStaleObjects foundation >>
+                              (threadDelay $ 1000000 * 60 * 30) >>
+                              runBackgroundThread
+    _ <- forkIO runBackgroundThread
     -- Run the application with Warp
     runSettings (warpSettings foundation) app
 
-removeExpiredPlaybackGrants :: App -> IO ()
-removeExpiredPlaybackGrants app = do
-  now <- getCurrentTime
-  pushLogStr (loggerSet . appLogger $ app) $ toLogStr ("Removing expired playback grants\n" :: ByteString)
-  _ <- runSqlPool (deleteWhere [ PlaybackGrantExpires <. now ]) (appConnPool app)
-  -- Every 30 minutes
-  _ <- threadDelay $ 1000000 * 60 * 30
-  removeExpiredPlaybackGrants app
+-- | When run, this function will remove state that it considers stale from
+-- either the database, or Google Cloud Storage. Things that it considers stale:
+--
+-- * Any expired playback grants
+-- * Any seen remote transfers that are over 3 weeks old
+removeStaleObjects :: App -> IO ()
+removeStaleObjects app = do
+    runSqlPool executeRemoval (appConnPool app)
+  where
+    settings = appSettings app
+    logMessage message = liftIO $ pushLogStr (loggerSet . appLogger $ app) $ toLogStr (message :: ByteString)
+
+    -- Returns True if the transfer object was deleted
+    -- successfully.
+    deleteRemoteTransferGCSObject (Entity _ t) = do
+      request' <- parseRequest $ "DELETE " ++ remoteTransferObjectURL t settings
+      request <- liftIO . appGoogleCloudAuthorizer app $ request'
+      response <- liftIO . appHttpClient app $ request
+      return $ responseStatus response == status204
+
+    executeRemoval = do
+      now <- liftIO getCurrentTime
+      let threeWeeksAgo = addUTCTime (-1 * 21 * 24 * 60 * 60) now
+
+      logMessage "Removing expired playback grants\n"
+      _ <- deleteWhere [ PlaybackGrantExpires <. now ]
+
+      logMessage "Removing stale remote transfers\n"
+      transfers <- selectList [ RemoteTransferSeen !=. Nothing
+                              , RemoteTransferSeen <. Just threeWeeksAgo ] []
+      _ <- sequenceA $ flip map transfers $ \e@(Entity k t) -> do
+        isDeleteSuccessful <- deleteRemoteTransferGCSObject e
+        if isDeleteSuccessful
+          then delete k
+          else logMessage . encodeUtf8 $
+               ("Failed to delete GCS object for: " ++ remoteTransferRecordingUID t)
+
+      return ()
 
 --------------------------------------------------------------
 -- Functions for DevelMain.hs (a way to run the app from GHCi)
