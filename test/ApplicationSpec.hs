@@ -49,7 +49,19 @@ spec = do
         now <- liftIO getCurrentTime
         app <- getTestYesod
         (Entity tid _) <- runDB $ factoryRemoteTransfer $ \t ->
-          t { remoteTransferSeen = Just $ addUTCTime (-1 * 60 * 60 * 24 * 30) now }
+          t { remoteTransferSeen = Just $ addUTCTime (-1 * 60 * 60 * 24 * 22) now }
+        maybeTransfer <- runDB $ DB.get tid
+        assertEq "Transfer exists" True (isJust maybeTransfer)
+        liftIO $ removeStaleObjects app
+        maybeTransfer' <- runDB $ DB.get tid
+        assertEq "Transfer doesn't exist" False (isJust maybeTransfer')
+
+      it "removes all remote transfers over 30 days old" $ do
+        now <- liftIO getCurrentTime
+        app <- getTestYesod
+        (Entity tid _) <- runDB $ factoryRemoteTransfer $ \t ->
+          t { remoteTransferSeen = Nothing
+            , remoteTransferCreated = addUTCTime (-1 * 60 * 60 * 24 * 31) now }
         maybeTransfer <- runDB $ DB.get tid
         assertEq "Transfer exists" True (isJust maybeTransfer)
         liftIO $ removeStaleObjects app

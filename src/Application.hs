@@ -218,13 +218,15 @@ removeStaleObjects app = do
     executeRemoval = do
       now <- liftIO getCurrentTime
       let threeWeeksAgo = addUTCTime (-1 * 21 * 24 * 60 * 60) now
+      let thirtyDaysAgo = addUTCTime (-1 * 30 * 24 * 60 * 60) now
 
       logMessage "Removing expired playback grants\n"
       _ <- deleteWhere [ PlaybackGrantExpires <. now ]
 
       logMessage "Removing stale remote transfers\n"
-      transfers <- selectList [ RemoteTransferSeen !=. Nothing
-                              , RemoteTransferSeen <. Just threeWeeksAgo ] []
+      transfers <- selectList ([ RemoteTransferSeen !=. Nothing
+                               , RemoteTransferSeen <. Just threeWeeksAgo ] ||.
+                               [ RemoteTransferCreated <. thirtyDaysAgo ]) []
       _ <- sequenceA $ flip map transfers $ \e@(Entity k t) -> do
         isDeleteSuccessful <- deleteRemoteTransferGCSObject e
         if isDeleteSuccessful
