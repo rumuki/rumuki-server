@@ -43,7 +43,7 @@ PlaybackGrant
   deriving Show
 
 -- | A recording that is temporarily stored by rumuki with the intent to be pulled
--- by the recipient device. All RemoteTransfers have a TTL of one week.
+-- by the recipient device. All RemoteTransfers have a TTL of 30 days.
 RemoteTransfer
   recordingUID Text
   recipientKeyFingerprint ByteString
