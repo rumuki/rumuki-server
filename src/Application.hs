@@ -65,7 +65,6 @@ import           Model.RemoteTransfer                  (remoteTransferObjectURL)
 
 import           System.Log.FastLogger                 (defaultBufSize,
                                                         newStdoutLoggerSet,
-                                                        pushLogStr,
                                                         pushLogStrLn, toLogStr)
 import           Yesod.Core.Types                      (loggerSet)
 
@@ -206,7 +205,7 @@ removeStaleObjects app = do
     runSqlPool executeRemoval (appConnPool app)
   where
     settings = appSettings app
-    logMessage message = liftIO $ pushLogStr (loggerSet . appLogger $ app) $ toLogStr (message :: ByteString)
+    logMessage message = liftIO $ pushLogStrLn (loggerSet . appLogger $ app) $ toLogStr (message :: ByteString)
 
     -- Returns True if the transfer object was deleted
     -- successfully.
@@ -221,10 +220,10 @@ removeStaleObjects app = do
       let threeWeeksAgo = addUTCTime (-1 * 21 * 24 * 60 * 60) now
       let thirtyDaysAgo = addUTCTime (-1 * 30 * 24 * 60 * 60) now
 
-      logMessage "Removing expired playback grants\n"
+      logMessage "Removing expired playback grants"
       _ <- deleteWhere [ PlaybackGrantExpires <. now ]
 
-      logMessage "Removing stale remote transfers\n"
+      logMessage "Removing stale remote transfers"
       transfers <- selectList ([ RemoteTransferSeen !=. Nothing
                                , RemoteTransferSeen <. Just threeWeeksAgo ] ||.
                                [ RemoteTransferCreated <. thirtyDaysAgo ]) []
