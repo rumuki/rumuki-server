@@ -32,7 +32,6 @@ gc-image: UPGRADE_COMMAND				:= sed -i '' 's/rumuki-server:.*/rumuki-server:$(DO
 gc-image:
 	@$(UPLOAD_IMAGE_GCR_AND_UPGRADE)
 
-# Use an intermediate docker container to build a binary for linux
 dist/x86_64-linux/server: server.cabal stack.yaml $(SRC_FILES)
 	$(call LOG, Building, binary)
 	@mkdir -p $(@D)
