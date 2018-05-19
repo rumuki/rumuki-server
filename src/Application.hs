@@ -60,6 +60,7 @@ import           Network.Wai.Middleware.RequestLogger  (Destination (Logger),
                                                         mkRequestLogger,
                                                         outputFormat)
 
+import           Control.Concurrent                    (threadDelay)
 import           Model.RemoteTransfer                  (remoteTransferObjectURL)
 
 import           System.Log.FastLogger                 (defaultBufSize,
@@ -258,5 +259,5 @@ handler :: Handler a -> IO a
 handler h = getAppSettings >>= makeFoundation >>= flip unsafeHandler h
 
 -- | Run DB queries
-db :: ReaderT SqlBackend (HandlerT App IO) a -> IO a
+db :: ReaderT SqlBackend (HandlerFor App) a -> IO a
 db = handler . runDB

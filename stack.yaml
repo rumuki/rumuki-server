@@ -1,18 +1,18 @@
+resolver: lts-11.9
 flags: {}
 packages:
 - '.'
 docker:
   enable: true
-  repo: nathankot/rumuki-stack-build:lts-8.9
+  repo: us.gcr.io/forward-lead-160122/stack-build:lts-11.9
 extra-deps:
-- HDBC-postgresql-2.3.2.4
-- HsSyck-0.53
-- aws-0.16
-- data-easy-0.7.0
-- dbmigrations-2.0.0
-- gogol-0.3.0
-- gogol-core-0.3.0
-- gogol-storage-0.3.0
-- load-env-0.1.1
-- yaml-light-0.1.4
-resolver: lts-8.9
+  - git: git@github.com:rumuki/gogol.git
+    commit: 344c9f781560e1ed8395b17e370ba1b085f2edc2
+    subdirs:
+      - core
+      - gogol
+      - gogol-storage
+  - HDBC-postgresql-2.3.2.5
+  - dbmigrations-2.0.0
+  - yaml-light-0.1.4
+  - HsSyck-0.53

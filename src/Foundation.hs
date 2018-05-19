@@ -63,10 +63,10 @@ instance Yesod App where
 
     -- What messages should be logged. The following includes all messages when
     -- in development, and warnings and errors in production.
-    shouldLog app _source level
+    shouldLogIO app _source level
       -- Don't ever log when testing
-      | appIsTesting (appSettings app) = level == LevelWarn || level == LevelError
-      | otherwise = appShouldLogAll (appSettings app)
+      | appIsTesting (appSettings app) = return $ level == LevelWarn || level == LevelError
+      | otherwise = return $ appShouldLogAll (appSettings app)
                     || level == LevelInfo
                     || level == LevelWarn
                     || level == LevelError

@@ -10,7 +10,7 @@
 -- declared in the Foundation.hs file.
 module Settings where
 
-import           ClassyPrelude.Yesod         hiding (throw)
+import           ClassyPrelude.Yesod
 import           Control.Exception           (throw)
 import           Data.Aeson                  (Result (..), fromJSON, withObject,
                                               (.!=), (.:?))

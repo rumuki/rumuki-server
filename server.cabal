@@ -70,7 +70,6 @@ library
                  , aeson
                  , asn1-encoding
                  , asn1-types
-                 , aws
                  , base
                  , base16-bytestring
                  , base64-bytestring
@@ -86,7 +85,6 @@ library
                  , connection
                  , containers
                  , data-default
-                 , data-easy
                  , dbmigrations
                  , directory
                  , either
@@ -95,7 +93,7 @@ library
                  , fast-logger
                  , file-embed
                  , filepath
-                 , gogol >= 0.2.0
+                 , gogol
                  , gogol-storage
                  , hourglass
                  , http-conduit
@@ -176,6 +174,7 @@ test-suite test
                  , TestExtension
                  , TestFactory
                  , TestImport
+                 , ApplicationSpec
 
     build-depends: HUnit
                  , aeson
@@ -189,7 +188,6 @@ test-suite test
                  , classy-prelude
                  , classy-prelude-yesod
                  , containers
-                 , data-easy
                  , entropy
                  , file-embed
                  , hspec >= 2.0.0
