@@ -7,7 +7,8 @@ RUN apt-get update && \
       libpq-dev \
       python-dev \
       libsqlite3-dev \
-      ca-certificates
+      ca-certificates \
+      build-essential
 
 EXPOSE 80
 
