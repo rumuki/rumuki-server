@@ -26,7 +26,6 @@ Device
     updated UTCTime Maybe
     preferredLocalization Text Maybe
     UniqueDeviceToken token
-    UniqueDeviceTokenFingerprint token keyFingerprint
   deriving Typeable Show
 
 -- | An entry that allows access to a key once. PlaybackGrants should be

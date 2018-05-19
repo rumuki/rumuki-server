@@ -22,14 +22,14 @@ instance FromJSON CreateDeviceRequest where
 postDevicesR :: Handler Value
 postDevicesR = do
   now <- liftIO getCurrentTime
-  CreateDeviceRequest
-    deviceToken
-    keyFingerprint
-    mApnToken
-    mPreferredLocalization <- requireJsonBody
+  CreateDeviceRequest deviceToken keyFingerprint mApnToken mPreferredLocalization <- requireJsonBody
   _ <- runDB $ upsertBy
     (UniqueDeviceToken deviceToken)
-    (Device deviceToken keyFingerprint mApnToken (Just now) mPreferredLocalization) []
+    (Device deviceToken keyFingerprint mApnToken (Just now) mPreferredLocalization)
+    [ DeviceKeyFingerprint =. keyFingerprint
+    , DeviceApnToken =. mApnToken
+    , DeviceUpdated =. Just now
+    , DevicePreferredLocalization =. mPreferredLocalization ]
   sendResponseStatus status201 emptyResponse
 
 data DeleteDeviceRequest = DeleteDeviceRequest Text [Text]

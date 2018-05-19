@@ -1,0 +1,3 @@
+Depends: schema
+Apply: |
+  ALTER TABLE "device" DROP CONSTRAINT "unique_device_token_fingerprint";
