@@ -17,14 +17,6 @@ SRC_FILES									:= $(shell find $(SRC_FOLDER) -type f) $(shell find $(CONFIG_F
 
 dist: dist/x86_64-linux/server
 
-.PHONY: image
-image: DOCKER_REPO_NAME			:= rumuki-server
-image: DOCKER_REPOSITORY		:= 185647243027.dkr.ecr.us-east-1.amazonaws.com/rumuki-server
-image: DOCKER_IMAGE_VERSION := git-$(shell git rev-parse HEAD | cut -c1-9)
-image: UPGRADE_COMMAND			:= sed -i '' 's/rumuki-server:.*"/rumuki-server:$(DOCKER_IMAGE_VERSION)"/g' ../Dockerrun.aws.json
-image:
-	@$(UPLOAD_IMAGE)
-
 .PHONY: gc-image
 gc-image: DOCKER_REPO_NAME			:= rumuki-server
 gc-image: DOCKER_IMAGE_VERSION	:= git-$(shell git rev-parse HEAD | cut -c1-9)
