@@ -21,9 +21,7 @@ postScreenCaptureDetectionsR = do
   devices <- runDB $ selectList [DeviceKeyFingerprint ==. keyFingerprint] []
   _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
     let kf = deviceKeyFingerprint device
-    _ <- runDB $ upsertBy
-      (UniqueScreenCaptureDetection kf recordingUID)
-      (ScreenCaptureDetection kf recordingUID) []
+    _ <- runDB $ insertUnique (ScreenCaptureDetection kf recordingUID)
     outstandingGrantsCount <- countUnseenPlaybackGrants device
     outstandingRecordingsCount <- countUnseenRecordings device
     forkAndSendPushNotificationI
