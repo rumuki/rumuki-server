@@ -207,13 +207,13 @@ removeStaleObjects app = do
     settings = appSettings app
     logMessage message = liftIO $ pushLogStrLn (loggerSet . appLogger $ app) $ toLogStr (message :: ByteString)
 
-    -- Returns True if the transfer object was deleted
-    -- successfully.
+    -- Returns True if the transfer object was deleted, or if it
+    -- never existed in the first place.
     deleteRemoteTransferGCSObject (Entity _ t) = do
       request' <- parseRequest $ "DELETE " ++ remoteTransferObjectURL t settings
       request <- liftIO . appGoogleCloudAuthorizer app $ request'
       response <- liftIO . appHttpClient app $ request
-      return $ responseStatus response == status204
+      return $ elem (responseStatus response) [status204, status404]
 
     executeRemoval = do
       now <- liftIO getCurrentTime
