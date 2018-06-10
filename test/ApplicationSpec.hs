@@ -92,7 +92,22 @@ spec = do
       mkResponder "DELETE"
       $ setResponseStatus HTTP.status404) $ do
 
-      it "doesn't remove a remote transfer if the GCS delete failed" $ do
+      it "removes remote transfers where GCS cannot find the file" $ do
+        now <- liftIO getCurrentTime
+        app <- getTestYesod
+        (Entity tid _) <- runDB $ factoryRemoteTransfer $ \t ->
+          t { remoteTransferSeen = Just $ addUTCTime (-1 * 60 * 60 * 24 * 30) now }
+        maybeTransfer <- runDB $ DB.get tid
+        assertEq "Transfer exists" True (isJust maybeTransfer)
+        liftIO $ removeStaleObjects app
+        maybeTransfer' <- runDB $ DB.get tid
+        assertEq "Transfer removed" False (isJust maybeTransfer')
+
+    withAppAndMockResponder (
+      mkResponder "DELETE"
+      $ setResponseStatus HTTP.status400) $ do
+
+      it "doesn't remove remote transfers where GCS request fails" $ do
         now <- liftIO getCurrentTime
         app <- getTestYesod
         (Entity tid _) <- runDB $ factoryRemoteTransfer $ \t ->
