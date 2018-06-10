@@ -3,7 +3,7 @@ flags: {}
 packages:
 - '.'
 docker:
-  enable: true
+  enable: false
   repo: us.gcr.io/forward-lead-160122/stack-build:lts-11.9
 extra-deps:
   - git: git@github.com:rumuki/gogol.git

@@ -27,9 +27,9 @@ gc-image:
 dist/x86_64-linux/server: server.cabal stack.yaml $(SRC_FILES)
 	$(call LOG, Building, binary)
 	@mkdir -p $(@D)
-	stack install
-	cp `stack path --local-bin`/server $@
+	stack --docker install
+	cp `stack path --docker --local-bin`/server $@
 
 .PHONY: test
 test:
-	@stack test
+	@stack --docker test
