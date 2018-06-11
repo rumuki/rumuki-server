@@ -14,9 +14,12 @@ module Application
     , db
     ) where
 
-import           Blaze.ByteString.Builder              (toByteString)
+import           Blaze.ByteString.Builder              (toByteString,
+                                                        toLazyByteString)
 import           Control.Concurrent                    (forkIO)
 import           Control.Monad.Logger                  (liftLoc, runLoggingT)
+import           Data.Aeson                            (encode, object, toJSON,
+                                                        (.=))
 import           Data.Time.Clock
 import           Database.Persist.Postgresql           (createPostgresqlPool,
                                                         pgConnStr, pgPoolSize)
@@ -42,7 +45,7 @@ import qualified Network.HTTP.Client                   as HTTP
 import qualified Network.HTTP.Client.TLS               as HTTP (tlsManagerSettings)
 import qualified Network.HTTP.Simple                   as HTTP (setRequestHeader)
 import qualified Network.HTTP.Types                    as HTTP (hAuthorization)
-import           Network.Wai                           (Middleware)
+import           Network.Wai                           hiding (responseStatus)
 import           Network.Wai.Handler.Warp              (Settings,
                                                         defaultSettings,
                                                         defaultShouldDisplayException,
@@ -53,12 +56,9 @@ import           Network.Wai.Middleware.AcceptOverride
 import           Network.Wai.Middleware.Autohead
 import           Network.Wai.Middleware.Cors
 import           Network.Wai.Middleware.MethodOverride
-import           Network.Wai.Middleware.RequestLogger  (Destination (Logger),
-                                                        IPAddrSource (..),
-                                                        OutputFormat (..),
-                                                        destination,
-                                                        mkRequestLogger,
-                                                        outputFormat)
+import           Network.Wai.Middleware.RequestLogger
+import           Prelude                               (read)
+import           Text.Printf                           (printf)
 
 import           Control.Concurrent                    (threadDelay)
 import           Model.RemoteTransfer                  (remoteTransferObjectURL)
@@ -131,14 +131,8 @@ makeApplication foundation = do
       (acceptOverride . autohead . methodOverride . cors createCors) appPlain
 
 makeLogWare :: App -> IO Middleware
-makeLogWare foundation = mkRequestLogger def {
-  outputFormat =
-      if appDetailedRequestLogging $ appSettings foundation
-      then Detailed True
-      else Apache
-           (if appIpFromHeader $ appSettings foundation
-             then FromFallback
-             else FromSocket)
+makeLogWare foundation = mkRequestLogger def
+  { outputFormat = CustomOutputFormatWithDetails formatAsJSON
   , destination = Logger $ loggerSet $ appLogger foundation
   }
 
@@ -205,7 +199,10 @@ removeStaleObjects app = do
     runSqlPool executeRemoval (appConnPool app)
   where
     settings = appSettings app
-    logMessage message = liftIO $ pushLogStrLn (loggerSet . appLogger $ app) $ toLogStr (message :: ByteString)
+    logMessage message =
+      liftIO $
+      pushLogStrLn (loggerSet . appLogger $ app) $
+      toLogStr (encode . object $ [ "message" .= (message :: Text) ])
 
     -- Returns True if the transfer object was deleted, or if it
     -- never existed in the first place.
@@ -231,8 +228,7 @@ removeStaleObjects app = do
         isDeleteSuccessful <- deleteRemoteTransferGCSObject e
         if isDeleteSuccessful
           then delete k
-          else logMessage . encodeUtf8 $
-               ("Failed to delete GCS object for: " ++ remoteTransferRecordingUID t)
+          else logMessage $ ("Failed to delete GCS object for: " ++ remoteTransferRecordingUID t)
 
       return ()
 
@@ -260,3 +256,35 @@ handler h = getAppSettings >>= makeFoundation >>= flip unsafeHandler h
 -- | Run DB queries
 db :: ReaderT SqlBackend (HandlerFor App) a -> IO a
 db = handler . runDB
+
+------------------------
+-- Functions for logging
+------------------------
+formatAsJSON :: OutputFormatterWithDetails
+formatAsJSON date req status responseSize duration _ response =
+  toLogStr (encode $
+    object
+      [ "message"            .= ("Route hit" :: Text)
+      , "request_method"     .= decodeUtf8 (requestMethod req)
+      , "request_host"       .= (decodeUtf8 <$> requestHeaderHost req)
+      , "request_path"       .= decodeUtf8 (rawPathInfo req)
+      , "request_size"       .= requestBodyLengthToJSON (requestBodyLength req)
+      , "request_user_agent" .= (decodeUtf8 <$> requestHeaderUserAgent req)
+      , "duration_ms"        .= (readAsDouble . printf "%.2f" . rationalToDouble $ toRational duration * 1000)
+      , "response_status"    .= statusCode status
+      , "response_size"      .= responseSize
+      , "response_body"      .= if statusCode status >= 400
+                                then Just . decodeUtf8 . toStrict . toLazyByteString $ response
+                                else Nothing
+      , "timestamp"          .= decodeUtf8 date
+      ]) <> "\n"
+  where
+    requestBodyLengthToJSON :: RequestBodyLength -> Value
+    requestBodyLengthToJSON ChunkedBody = String "Unknown"
+    requestBodyLengthToJSON (KnownLength l) = toJSON l
+
+    readAsDouble :: String -> Double
+    readAsDouble = read
+
+    rationalToDouble :: Rational -> Double
+    rationalToDouble = fromRational

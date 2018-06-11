@@ -4,16 +4,21 @@
 
 module Foundation where
 
+import           Network.Wai.Logger
+import           Control.Monad.Logger
+import           Data.Aeson (encode, object, (.=))
+import           System.Log.FastLogger (fromLogStr)
 import           Database.Persist.Sql (ConnectionPool, runSqlPool)
 import           Import.NoFoundation
 import qualified Network.Wai as W
 import           Network.Wai.Middleware.Cors
-import           Yesod.Core.Types (Logger)
+import           Yesod.Core.Types
 import qualified Yesod.Core.Unsafe as Unsafe
 import qualified Network.HTTP.Client as HTTP
 import qualified Data.ByteString.Lazy as LBS
 import           Data.CaseInsensitive (CI)
 import qualified Data.ByteString as BS
+import qualified Data.Text as T
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -72,6 +77,12 @@ instance Yesod App where
                     || level == LevelError
 
     makeLogger = return . appLogger
+
+    messageLoggerSource app logger loc source level msg = do
+      loggable <- shouldLogIO app source level
+      when loggable $
+        customFormatLogMessage (loggerDate logger) loc source level msg >>=
+        loggerPutStr logger
 
 --------------------------------------------------------------------------------
 -- Override unused functionality
@@ -138,3 +149,33 @@ instance YesodPersistRunner App where
 
 unsafeHandler :: App -> Handler a -> IO a
 unsafeHandler = Unsafe.fakeHandlerGetLogger appLogger
+
+customFormatLogMessage :: IO ZonedDate -> Loc -> LogSource -> LogLevel -> LogStr -> IO LogStr
+customFormatLogMessage getdate loc src level msg = do
+    now <- getdate
+    return $ (
+      toLogStr . encode . object $
+        [ "timestamp" .= decodeUtf8 now
+        , "level"     .= T.pack (drop 5 $ show level)
+        , "src"       .= (src <> sourceSuffix)
+        , "message"   .= decodeUtf8 (fromLogStr msg)
+        ]) <> "\n"
+    where
+    sourceSuffix = if loc_package loc == "<unknown>" then "" else
+      " @(" <> T.pack (fileLocationToString loc) <> ")"
+
+-- taken from file-location package
+-- turn the TH Loc loaction information into a human readable string
+-- leaving out the loc_end parameter
+fileLocationToString :: Loc -> String
+fileLocationToString loc =
+    concat
+      [ loc_package loc
+      , ':' : loc_module loc
+      , ' ' : loc_filename loc
+      , ':' : line loc
+      , ':' : char loc
+      ]
+  where
+    line = show . fst . loc_start
+    char = show . snd . loc_start

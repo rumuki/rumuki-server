@@ -16,12 +16,7 @@ notifications-port:      "_env:NOTIFICATIONS_PORT:80"
 
 recording-updatable-timeout: 300 # 5 minutes
 
-# Optional values with the following production defaults.
-# In development, they default to the inverse.
-#
-# development: false
-# detailed-logging: false
-# should-log-all:
+should-log-all: false
 
 database:
   user:     "_env:PG_USER:server"

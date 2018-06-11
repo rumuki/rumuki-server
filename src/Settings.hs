@@ -39,8 +39,6 @@ data AppSettings = AppSettings
     , appIsTesting              :: Bool
     -- ^ Set to true when running tests
 
-    , appDetailedRequestLogging :: Bool
-    -- ^ Use detailed request logging system
     , appShouldLogAll           :: Bool
     -- ^ Should all log messages be displayed?
 
@@ -63,7 +61,6 @@ instance FromJSON AppSettings where
         appIpFromHeader           <- o .: "ip-from-header"
 
         appIsTesting              <- o .:? "app-is-testing"   .!= False
-        appDetailedRequestLogging <- o .:? "detailed-logging" .!= False
         appShouldLogAll           <- o .:? "should-log-all"   .!= False
 
         appNotificationsHost      <- o .: "notifications-host"
