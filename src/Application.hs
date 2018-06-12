@@ -131,10 +131,11 @@ makeApplication foundation = do
       (acceptOverride . autohead . methodOverride . cors createCors) appPlain
 
 makeLogWare :: App -> IO Middleware
-makeLogWare foundation = mkRequestLogger def
-  { outputFormat = CustomOutputFormatWithDetails formatAsJSON
-  , destination = Logger $ loggerSet $ appLogger foundation
-  }
+makeLogWare foundation
+  | appIsTesting (appSettings foundation) = return id
+  | otherwise = mkRequestLogger def
+    { outputFormat = CustomOutputFormatWithDetails formatAsJSON
+    , destination = Logger $ loggerSet $ appLogger foundation }
 
 -- | Warp settings for the given foundation value.
 warpSettings :: App -> Settings
@@ -199,10 +200,10 @@ removeStaleObjects app = do
     runSqlPool executeRemoval (appConnPool app)
   where
     settings = appSettings app
-    logMessage message =
-      liftIO $
-      pushLogStrLn (loggerSet . appLogger $ app) $
-      toLogStr (encode . object $ [ "message" .= (message :: Text) ])
+    logMessage message = if appIsTesting settings
+      then return ()
+      else liftIO $ pushLogStrLn (loggerSet . appLogger $ app) $
+           toLogStr (encode . object $ [ "message" .= (message :: Text) ])
 
     -- Returns True if the transfer object was deleted, or if it
     -- never existed in the first place.
