@@ -17,11 +17,11 @@ SRC_FILES									:= $(shell find $(SRC_FOLDER) -type f) $(shell find $(CONFIG_F
 
 dist: dist/x86_64-linux/server
 
-.PHONY: gc-image
-gc-image: DOCKER_REPO_NAME			:= rumuki-server
-gc-image: DOCKER_IMAGE_VERSION	:= git-$(shell git rev-parse HEAD | cut -c1-9)
-gc-image: UPGRADE_COMMAND				:= sed -i '' 's/rumuki-server:.*/rumuki-server:$(DOCKER_IMAGE_VERSION)/g' ../$(SERVER_CONFIG_FILE)
-gc-image:
+.PHONY: image
+image: DOCKER_REPO_NAME			:= rumuki-server
+image: DOCKER_IMAGE_VERSION	:= git-$(shell git rev-parse HEAD | cut -c1-9)
+image: UPGRADE_COMMAND			:= sed -i '' 's/rumuki-server:.*/rumuki-server:$(DOCKER_IMAGE_VERSION)/g' ../$(SERVER_CONFIG_FILE)
+image:
 	@$(UPLOAD_IMAGE_GCR_AND_UPGRADE)
 
 dist/x86_64-linux/server: server.cabal stack.yaml $(SRC_FILES)

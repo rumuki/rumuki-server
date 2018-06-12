@@ -13,8 +13,6 @@ RUN apt-get update && \
 EXPOSE 80
 
 ENV PORT 80
-ENV PG_HOST database
-ENV PG_PORT 5432
 
 COPY entrypoint.sh /
 COPY wait-for-it.sh /
