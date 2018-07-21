@@ -170,18 +170,24 @@ testDelete = describe "deletePerpetualGrantsR" $ do
 
   it "removes grants sent to the given recipient" $ do
     recipient@(Entity _ d) <- makeRecipient
+    other <- makeOther
     _ <- makeGrant recipient
+    _ <- makeGrant other
     requestJSON $ do
       setUrl (PerpetualGrantsR recordingUID)
       setMethod "DELETE"
       setRequestBody $ encode $ object [ "recipientKeyFingerprint" .= deviceKeyFingerprint d ]
     statusIs 204
-    pg <- runDB $ selectFirst [] [] :: YesodExample App (Maybe (Entity PerpetualGrant))
-    boolIsTrue "playback grants removed" $ isNothing pg
+    pgs <- runDB $ selectList [] [] :: YesodExample App [(Entity PerpetualGrant)]
+    boolIsTrue "one  remaining" $ length pgs == 1
 
   where
     recordingUID = "recordinguid123"
     makeRecipient = runDB $ retrieve $ factoryDevice id
+    makeOther = runDB $ retrieve $ factoryDevice
+                $ \d -> d { deviceToken = "other-device"
+                          , deviceKeyFingerprint = "other-device-fingerprint"
+                          }
     makeGrant device = do
       runDB $ factoryPerpetualGrant device $ \g ->
         g { perpetualGrantRecordingUID = recordingUID }

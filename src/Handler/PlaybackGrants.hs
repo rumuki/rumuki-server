@@ -55,7 +55,22 @@ getPlaybackGrantsR recordingUid = do
 
   sendResponseStatus status200 $ object [ "playbackGrants" .= grants ]
 
+data DELETERequest =
+  DELETERequest { deleteRequestRecipientKeyFingerprint :: ByteString }
+
+instance FromJSON DELETERequest where
+  parseJSON = withObject "playback grants delete request" $ \o ->
+    DELETERequest
+    <$> o .: "recipientKeyFingerprint"
+
 deletePlaybackGrantsR :: Text -> Handler Value
 deletePlaybackGrantsR recordingUid = do
-  runDB $ deleteWhere [ PlaybackGrantRecordingUID ==. recordingUid ]
+  jsonResult <- parseJsonBody
+  runDB $ deleteWhere $
+    case jsonResult of
+      (Success req) ->
+        [ PlaybackGrantRecordingUID ==. recordingUid
+        , PlaybackGrantRecipientKeyFingerprint ==. deleteRequestRecipientKeyFingerprint req ]
+      (Error _) ->
+        [ PlaybackGrantRecordingUID ==. recordingUid ]
   sendResponseStatus status204 ()

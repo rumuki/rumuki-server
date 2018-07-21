@@ -164,18 +164,38 @@ testDelete = describe "deletePlaybackGrantsR" $ do
 
   it "removes all grants" $ do
     recipient <- makeRecipient
+    other <- makeOther
     _ <- makeGrant recipient
     _ <- makeGrant recipient
+    _ <- makeGrant other
     requestJSON
       $ setUrl (PlaybackGrantsR recordingUID)
       >> setMethod "DELETE"
     statusIs 204
-    pg <- runDB $ selectFirst [] [] :: YesodExample App (Maybe (Entity PlaybackGrant))
-    boolIsFalse "playback grants removed" $ isJust pg
+    pgs <- runDB $ selectList [] [] :: YesodExample App [(Entity PlaybackGrant)]
+    boolIsTrue "zero remaining" $ length pgs == 0
+
+  it "removes only grants sent to a recipient if a key fingerprint is given" $ do
+    recipient@(Entity _ d) <- makeRecipient
+    other <- makeOther
+    _ <- makeGrant recipient
+    _ <- makeGrant recipient
+    _ <- makeGrant other
+    requestJSON
+      $ setUrl (PlaybackGrantsR recordingUID)
+      >> setRequestBody (encode $ object [ "recipientKeyFingerprint" .= deviceKeyFingerprint d ])
+      >> setMethod "DELETE"
+    statusIs 204
+    pgs <- runDB $ selectList [] [] :: YesodExample App [(Entity PlaybackGrant)]
+    boolIsTrue "one remaining" $ length pgs == 1
 
   where
     recordingUID = "recordinguid123"
     makeRecipient = runDB $ retrieve $ factoryDevice id
+    makeOther = runDB $ retrieve $ factoryDevice
+                $ \d -> d { deviceToken = "other-device"
+                          , deviceKeyFingerprint = "other-device-fingerprint"
+                          }
     makeGrant device = do
       runDB $ factoryPlaybackGrant device $ \g ->
         g { playbackGrantRecordingUID = recordingUID }
