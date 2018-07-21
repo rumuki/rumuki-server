@@ -43,6 +43,7 @@ instance FromJSON DeleteDeviceRequest where
 deleteDevicesR :: Handler Value
 deleteDevicesR = do
   DeleteDeviceRequest deviceToken recordingUIDs <- requireJsonBody
-  _ <- sequence $ map (runDB . deleteWhere . (:[]) . (==.) PlaybackGrantRecordingUID) recordingUIDs
+  mapM_ (runDB . deleteWhere . (:[]) . (==.) PlaybackGrantRecordingUID) recordingUIDs
+  mapM_ (runDB . deleteWhere . (:[]) . (==.) PerpetualGrantRecordingUID) recordingUIDs
   runDB $ deleteBy $ UniqueDeviceToken deviceToken
   sendResponseStatus status204 ()

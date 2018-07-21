@@ -3,16 +3,17 @@ module Handler.DeviceUpdate (postDeviceUpdateR) where
 import           Data.Aeson
 import           Data.Time.Clock      (getCurrentTime)
 import           Import
+import           Model.PerpetualGrant ()
 import           Model.PlaybackGrant  ()
 import           Model.RemoteTransfer (RemoteTransferView (..),
                                        remoteTransferObjectURL,
                                        remoteTransferPublicURL)
 
-data GETRequest = GETRequest [Text] ByteString
+data POSTRequest = POSTRequest [Text] ByteString
 
-instance FromJSON GETRequest where
+instance FromJSON POSTRequest where
   parseJSON = withObject "device update request" $ \o ->
-    GETRequest
+    POSTRequest
     <$> o .: "recordingUIDs"
     <*> o .: "deviceKeyFingerprint"
 
@@ -20,7 +21,7 @@ postDeviceUpdateR :: Handler Value
 postDeviceUpdateR = do
   settings <- appSettings <$> getYesod
   now <- liftIO getCurrentTime
-  GETRequest uids' keyFingerprint <- requireJsonBody
+  POSTRequest uids' keyFingerprint <- requireJsonBody
 
   -- Update the last updated value on the device:
   maybeDevice <- runDB $ selectFirst [ DeviceKeyFingerprint ==. keyFingerprint ] []
@@ -35,19 +36,22 @@ postDeviceUpdateR = do
   -- Add the new remote transfer UIDs into the uids list
   let uids = uids' ++ map (remoteTransferRecordingUID . entityVal) transfers
 
-  detections  <- runDB $ selectList [ ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint ] []
-  grants      <- runDB $ selectList [ PlaybackGrantRecordingUID <-. uids , PlaybackGrantExpires >. now ] []
-  -- Update the seen property of each of the remote transfers:
-  _ <- sequenceA
-       $ map (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])
-       $ filter (isNothing . remoteTransferSeen . entityVal) transfers
+  detections     <- runDB $ selectList [ScreenCaptureDetectionAffectedDeviceKeyFingerprint ==. keyFingerprint] []
+  playbackGrants <- runDB $ selectList [PlaybackGrantRecordingUID <-. uids, PlaybackGrantExpires >. now] []
+  perpetualGrants <- runDB $ selectList [PerpetualGrantRecordingUID <-. uids, PerpetualGrantExpires >. now] []
 
-  transferViews <- (flip mapM) transfers $ \(Entity _ t) -> do
+  -- Update the seen property of each of the remote transfers:
+  traverse_
+    (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])
+    (filter (isNothing . remoteTransferSeen . entityVal) transfers)
+
+  transferViews <- forM transfers $ \(Entity _ t) -> do
     let url = remoteTransferPublicURL t settings
     return $ RemoteTransferView t url
 
   sendResponseStatus status200 $ object [
-      "playbackGrants"          .= grants
+      "playbackGrants"          .= playbackGrants
+    , "perpetualGrants"         .= perpetualGrants
     , "screenCaptureDetections" .= detections
     , "remoteTransfers"         .= transferViews ]
 

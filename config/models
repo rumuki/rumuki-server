@@ -41,6 +41,18 @@ PlaybackGrant
     created UTCTime default=now()
   deriving Show
 
+-- | An entry that allows access to a key once. PerpetualGrants live until
+-- they are expired or removed.
+PerpetualGrant
+    recordingUID Text
+    recipientKeyFingerprint ByteString
+    -- | Key encrypted with the recipients public key.
+    keyCipher ByteString
+    expires UTCTime
+    created UTCTime default=now()
+    UniquePerpetualGrant recordingUID recipientKeyFingerprint
+  deriving Show
+
 -- | A recording that is temporarily stored by rumuki with the intent to be pulled
 -- by the recipient device. All RemoteTransfers have a TTL of 30 days.
 RemoteTransfer

@@ -25,6 +25,8 @@ library
                      Handler.RemoteTransfers
                      Handler.PlaybackGrant
                      Handler.PlaybackGrants
+                     Handler.PerpetualGrant
+                     Handler.PerpetualGrants
                      Handler.ScreenCaptureDetections
                      Handler.DeviceUpdate
                      Handler.Subscribers
@@ -32,9 +34,11 @@ library
                      Import.NoFoundation
                      Migrations
                      Model
+                     Model.ConsumedGrant
                      Model.Extension
                      Model.PlaybackGrant
                      Model.RemoteTransfer
+                     Model.PerpetualGrant
                      Model.PushNotification
                      Model.Subscriber
                      Model.Device
@@ -165,6 +169,8 @@ test-suite test
 
     other-modules: Handler.PlaybackGrantSpec
                  , Handler.PlaybackGrantsSpec
+                 , Handler.PerpetualGrantSpec
+                 , Handler.PerpetualGrantsSpec
                  , Handler.DevicesSpec
                  , Handler.DeviceUpdateSpec
                  , Handler.ScreenCaptureDetectionsSpec

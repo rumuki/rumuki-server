@@ -16,10 +16,11 @@ module Application
 
 import           Blaze.ByteString.Builder              (toByteString,
                                                         toLazyByteString)
-import           Control.Concurrent                    (forkIO)
+import           Control.Concurrent                    (forkIO, threadDelay)
 import           Control.Monad.Logger                  (liftLoc, runLoggingT)
 import           Data.Aeson                            (encode, object, toJSON,
                                                         (.=))
+import           Data.Foldable                         (sequenceA_)
 import           Data.Time.Clock
 import           Database.Persist.Postgresql           (createPostgresqlPool,
                                                         pgConnStr, pgPoolSize)
@@ -29,6 +30,8 @@ import           Handler.DeviceUpdate
 import           Handler.Feedback
 import           Handler.Health
 import           Handler.Home
+import           Handler.PerpetualGrant
+import           Handler.PerpetualGrants
 import           Handler.PlaybackGrant
 import           Handler.PlaybackGrants
 import           Handler.RemoteTransfer
@@ -60,7 +63,6 @@ import           Network.Wai.Middleware.RequestLogger
 import           Prelude                               (read)
 import           Text.Printf                           (printf)
 
-import           Control.Concurrent                    (threadDelay)
 import           Model.RemoteTransfer                  (remoteTransferObjectURL)
 
 import           System.Log.FastLogger                 (defaultBufSize,
@@ -84,17 +86,18 @@ makeFoundation appSettings = do
     loggerSet <- newStdoutLoggerSet defaultBufSize
     appLogger <- makeYesodLogger loggerSet
     httpManager <- HTTP.newManager HTTP.tlsManagerSettings
-    let appHttpClient = flip HTTP.httpLbs $ httpManager
+    let appHttpClient = flip HTTP.httpLbs httpManager
 
-    appGoogleCloudAuthorizer <- case appGCSAuthorize appSettings of
-      False -> return $ return . HTTP.setRequestHeader HTTP.hAuthorization ["Bearer mock-gcs"]
-      True -> do
+    appGoogleCloudAuthorizer <-
+      if appGCSAuthorize appSettings
+      then do
         gcCredentials <- GC.allow GCS.storageReadWriteScope <$> GC.getApplicationDefault httpManager
-        let gcLogger = \logLevel -> case logLevel of
+        let gcLogger logLevel = case logLevel of
               GC.Error -> pushLogStrLn loggerSet . toLogStr . toByteString
               _ -> return . const ()
         gcStore <- GC.initStore gcCredentials gcLogger httpManager
         return $ \request -> GC.authorize request gcStore gcLogger httpManager
+      else return $ return . HTTP.setRequestHeader HTTP.hAuthorization ["Bearer mock-gcs"]
 
     -- We need a log function to create a connection pool. We need a connection
     -- pool to create our foundation. And we need our foundation to get a
@@ -152,18 +155,8 @@ warpSettings foundation =
             (toLogStr $ "Exception from Warp: " ++ show e))
       defaultSettings
 
--- | For yesod devel, return the Warp settings and WAI Application.
-getApplicationDev :: IO (Settings, Application)
-getApplicationDev = do
-    settings <- getAppSettings
-    foundation <- makeFoundation settings
-    wsettings <- getDevSettings $ warpSettings foundation
-    app <- makeApplication foundation
-    return (wsettings, app)
-
 getAppSettings :: IO AppSettings
-getAppSettings = do
-    loadYamlSettings [configSettingsYml] [] useEnv
+getAppSettings = loadYamlSettings [configSettingsYml] [] useEnv
 
 -- | main function for use by yesod devel
 develMain :: IO ()
@@ -184,7 +177,7 @@ appMain = do
     app <- makeApplication foundation
     -- Fork a background thread that periodically removes stale objects
     let runBackgroundThread = removeStaleObjects foundation >>
-                              (threadDelay $ 1000000 * 60 * 30) >>
+                              threadDelay (1000000 * 60 * 30) >>
                               runBackgroundThread
     _ <- forkIO runBackgroundThread
     -- Run the application with Warp
@@ -196,8 +189,7 @@ appMain = do
 -- * Any expired playback grants
 -- * Any seen remote transfers that are over 3 weeks old
 removeStaleObjects :: App -> IO ()
-removeStaleObjects app = do
-    runSqlPool executeRemoval (appConnPool app)
+removeStaleObjects app = runSqlPool executeRemoval (appConnPool app)
   where
     settings = appSettings app
     logMessage message = if appIsTesting settings
@@ -225,24 +217,33 @@ removeStaleObjects app = do
       transfers <- selectList ([ RemoteTransferSeen !=. Nothing
                                , RemoteTransferSeen <. Just threeWeeksAgo ] ||.
                                [ RemoteTransferCreated <. thirtyDaysAgo ]) []
-      _ <- sequenceA $ flip map transfers $ \e@(Entity k t) -> do
+      sequenceA_ $ flip map transfers $ \e@(Entity k t) -> do
         isDeleteSuccessful <- deleteRemoteTransferGCSObject e
         if isDeleteSuccessful
           then delete k
-          else logMessage $ ("Failed to delete GCS object for: " ++ remoteTransferRecordingUID t)
+          else logMessage ("Failed to delete GCS object for: " ++ remoteTransferRecordingUID t)
 
       return ()
 
 --------------------------------------------------------------
 -- Functions for DevelMain.hs (a way to run the app from GHCi)
 --------------------------------------------------------------
+-- | For yesod devel, return the Warp settings and WAI Application.
+getApplicationDev :: IO (Settings, Application)
+getApplicationDev = do
+  settings <- getAppSettings
+  foundation <- makeFoundation settings
+  wsettings <- getDevSettings $ warpSettings foundation
+  app <- makeApplication foundation
+  return (wsettings, app)
+
 getApplicationRepl :: IO (Int, App, Application)
 getApplicationRepl = do
-    settings <- getAppSettings
-    foundation <- makeFoundation settings
-    wsettings <- getDevSettings $ warpSettings foundation
-    app1 <- makeApplication foundation
-    return (getPort wsettings, foundation, app1)
+  settings <- getAppSettings
+  foundation <- makeFoundation settings
+  wsettings <- getDevSettings $ warpSettings foundation
+  app1 <- makeApplication foundation
+  return (getPort wsettings, foundation, app1)
 
 shutdownApp :: App -> IO ()
 shutdownApp _ = return ()

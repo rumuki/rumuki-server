@@ -30,6 +30,15 @@ dist/x86_64-linux/server: server.cabal stack.yaml $(SRC_FILES)
 	stack --docker install
 	cp `stack path --docker --local-bin`/server $@
 
+.PHONY: setup
+setup:
+	@stack setup
+	@stack install hlint
+
 .PHONY: test
 test:
 	@stack --docker test
+
+.PHONY: lint
+lint:
+	@stack exec -- hlint src

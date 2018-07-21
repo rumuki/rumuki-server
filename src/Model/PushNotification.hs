@@ -19,7 +19,7 @@ data PushNotification = PushNotification { notificationToken            :: Text
                                          , notificationBadge            :: Int }
 
 instance ToJSON PushNotification where
-  toJSON n = object $
+  toJSON n = object
     [ "token"             .= [notificationToken n]
     , "platform"          .= notificationPlatform n
     , "message"           .= notificationMessage n
@@ -32,7 +32,7 @@ makeNotificationsFromDevice :: Device
                             -> Int  -- ^ Number of items to show on the badge
                             -> [ PushNotification ] -- ^ A list of possible notifications
 
-makeNotificationsFromDevice u m b = maybe [] (:[]) $ do
+makeNotificationsFromDevice u m b = maybeToList $ do
   token' <- deviceApnToken u
   let token = decodeUtf8 . toStrict . toLazyByteString . byteStringHex $ token'
   return PushNotification { notificationToken = token
@@ -58,7 +58,7 @@ sendPushNotification settings u m b = do
               $ setRequestPath "/push"
               $ setRequestMethod "POST"
               $ setRequestBodyJSON (object [ "notifications" .= makeNotificationsFromDevice u m b ])
-              $ defaultRequest
+              defaultRequest
 
   response <- httpLBS request
   return $ getResponseStatusCode response == 200
@@ -73,10 +73,9 @@ forkAndSendPushNotification msg badgeCount recipient = do
     settings <- appSettings <$> getYesod
     let isTesting = appIsTesting settings
         h :: HttpException -> Handler ()
-        h = case isTesting of
-          True -> const (return ())
-          False -> $(logWarn) . fromString . show
-    handle h $ liftIO $ sendPushNotification settings recipient msg badgeCount >> return ()
+        h = if isTesting then const (return ())
+            else $(logWarn) . fromString . show
+    handle h $ liftIO $ void $ sendPushNotification settings recipient msg badgeCount
 
 forkAndSendPushNotificationI :: AppMessage -> Int -> Device -> Handler ()
 

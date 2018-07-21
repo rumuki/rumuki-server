@@ -2,21 +2,20 @@ module Handler.PlaybackGrants where
 
 import           Data.Aeson
 import           Data.Time.Clock
-import           Handler.Extension
 import           Import
 import           Model.Device
 import           Model.PlaybackGrant    ()
 import           Model.PushNotification
 
-data PlaybackGrantsRequest =
-  PlaybackGrantsRequest { keyCipher :: ByteString
-                        , recipientKeyFingerprint :: ByteString
-                        , keyOffset :: Maybe Int
-                        }
+data POSTRequest =
+  POSTRequest { postRequestKeyCipher :: ByteString
+              , postRequestRecipientKeyFingerprint :: ByteString
+              , postRequestKeyOffset :: Maybe Int
+              }
 
-instance FromJSON PlaybackGrantsRequest where
+instance FromJSON POSTRequest where
   parseJSON = withObject "playback grants request" $ \o ->
-    PlaybackGrantsRequest
+    POSTRequest
     <$> o .: "keyCipher"
     <*> o .: "recipientKeyFingerprint"
     <*> o .:? "keyOffset"
@@ -28,26 +27,23 @@ postPlaybackGrantsR recordingUID = do
   let expiry = addUTCTime (60 * 60 * 24 * 7) now
   let pg = PlaybackGrant
            recordingUID
-           (recipientKeyFingerprint req)
-           (keyCipher req)
-           (keyOffset req)
+           (postRequestRecipientKeyFingerprint req)
+           (postRequestKeyCipher req)
+           (postRequestKeyOffset req)
            expiry
            now
 
-  -- Try and insert
-  pgid <- fromMaybeM (error "Could not create playback grant") $ runDB $ insertUnique pg
+  (mpgid, deviceUnseenCounts) <- runDB $ do
+    mpgid' <- insertUnique pg
+    deviceUnseenCounts' <- buildDeviceUnseenCounts $ postRequestRecipientKeyFingerprint req
+    return (mpgid', deviceUnseenCounts')
 
-  -- If a device for the given fingerprint exists, fire a push notification
-  devices <- runDB $ selectList [DeviceKeyFingerprint ==. recipientKeyFingerprint req] []
-  _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
-    outstandingGrantsCount <- countUnseenPlaybackGrants device
-    outstandingRecordingsCount <- countUnseenRecordings device
-    forkAndSendPushNotificationI
-      MsgNewPlaybackGrantReceived
-      (outstandingGrantsCount + outstandingRecordingsCount)
-      device
+  pgid <- maybe (error "Could not create playback grant") return mpgid
 
-  sendResponseStatus status201 $ object ["playbackGrant" .= (Entity pgid pg)]
+  sequence_ $ flip map deviceUnseenCounts $ \(device, unseenCount) ->
+    forkAndSendPushNotificationI MsgNewPlaybackGrantReceived unseenCount device
+
+  sendResponseStatus status201 $ object ["playbackGrant" .= Entity pgid pg]
 
 getPlaybackGrantsR :: Text -> Handler Value
 getPlaybackGrantsR recordingUid = do

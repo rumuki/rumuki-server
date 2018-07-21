@@ -17,7 +17,7 @@ getRemoteTransferR ruid = do
 
   request <- parseRequest ("GET " ++ objectURL) >>= liftIO . appGoogleCloudAuthorizer app
   response <- liftIO . appHttpClient app $ request
-  when (responseStatus response /= status200) $ notFound
+  when (responseStatus response /= status200) notFound
   _ <- runDB $ update transferID [RemoteTransferSeen =. Just now]
 
   sendResponseStatus status200 $ object [

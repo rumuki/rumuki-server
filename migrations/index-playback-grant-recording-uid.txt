@@ -1,0 +1,6 @@
+Depends: index-playback-grant-recipient-key-fingerprint
+Apply: |
+  DROP INDEX IF EXISTS playback_grant_recipient_key_fingerprint_idx;
+  CREATE INDEX playback_grant_recording_uid_idx
+  ON playback_grant
+  USING hash (recording_u_i_d);

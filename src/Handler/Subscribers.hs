@@ -13,7 +13,7 @@ postSubscribersR = do
 
   let roundedNow = UTCTime { utctDay = utctDay now
                            , utctDayTime = secondsToDiffTime . (*) (60 * 60) . round $
-                                           (utctDayTime now) / (60 * 60) }
+                                           utctDayTime now / (60 * 60) }
 
   let subscriber = subscriber' { subscriberEmail = decodeUtf8 email'
                                , subscriberCreated = Just roundedNow }

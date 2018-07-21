@@ -17,7 +17,7 @@ spec = do
 
         it "does not return the key cipher" $ do
           device <- makeDevice
-          _ <- makeGrant device
+          _ <- makePlaybackGrant device
           makeRequest device
           statusIs 200
           responseSatisfies "no key or cipher text" $ \(Object o) ->
@@ -31,10 +31,10 @@ spec = do
                       , ("created", Bool True) ]
               in null (H.toList d)
 
-        it "does not return grants that have expired" $ do
+        it "does not return playback grants that have expired" $ do
           expiredTime <- liftIO $ addUTCTime (-60) <$> getCurrentTime
           device <- makeDevice
-          _ <- makeGrant device
+          _ <- makePlaybackGrant device
           _ <- runDB $ factoryPlaybackGrant device $ \g ->
               g { playbackGrantRecordingUID = recordingUID
                 , playbackGrantExpires = expiredTime }
@@ -43,6 +43,18 @@ spec = do
           responseSatisfies "doesn't include the expired grant" $ \(Object v) ->
               let (Array grants) = v ! "playbackGrants"
               in length grants == 1
+
+        it "does not return perpetual grants that have expired" $ do
+          expiredTime <- liftIO $ addUTCTime (-60) <$> getCurrentTime
+          device <- makeDevice
+          _ <- runDB $ factoryPerpetualGrant device $ \g ->
+              g { perpetualGrantRecordingUID = recordingUID
+                , perpetualGrantExpires = expiredTime }
+          makeRequest device
+          statusIs 200
+          responseSatisfies "doesn't include the expired grant" $ \(Object v) ->
+              let (Array grants) = v ! "perpetualGrants"
+              in length grants == 0
 
   withAppAndMockResponder (makeMockResponder id) $ do
 
@@ -69,7 +81,7 @@ spec = do
 
       it "returns any new playback grants on the remote transfers" $ do
         device@(Entity _ d) <- makeDevice
-        _ <- makeGrant device
+        _ <- makePlaybackGrant device
         _ <- makeRemoteTransfer device
         requestJSON $ do
           setUrl $ DeviceUpdateR
@@ -104,7 +116,6 @@ spec = do
         body <- withResponse $ return . simpleBody
         let maybeDecoded = decode body :: Maybe Value
         let maybeURL = parseMaybe parseDownloadURL =<< maybeDecoded
-        liftIO $ print maybeURL
         assertEq "downloadURL as expected"
           (Just "https://rumuki.storage.googleapis.com/recording123")
           maybeURL
@@ -125,7 +136,7 @@ spec = do
     recordingUID = "recording123"
     makeMockResponder = mockGCResponder "/storage/v1/b/rumuki/o/recording123" "GET"
     makeDevice = runDB $ retrieve $ factoryDevice id
-    makeGrant device = runDB $ factoryPlaybackGrant device $ \g -> g { playbackGrantRecordingUID = recordingUID }
+    makePlaybackGrant device = runDB $ factoryPlaybackGrant device $ \g -> g { playbackGrantRecordingUID = recordingUID }
     makeRemoteTransfer (Entity _ d) = runDB $ factoryRemoteTransfer
       $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
     makeRequest (Entity _ d) = requestJSON $ do

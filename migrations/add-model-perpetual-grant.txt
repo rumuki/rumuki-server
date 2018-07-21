@@ -1,0 +1,14 @@
+Depends: schema
+Apply: |
+  CREATE TABLE "perpetual_grant" (
+    "id" SERIAL8 PRIMARY KEY UNIQUE,
+    "recording_u_i_d" VARCHAR NOT NULL,
+    "recipient_key_fingerprint" BYTEA NOT NULL,
+    "key_cipher" BYTEA NOT NULL,
+    "expires" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+  );
+
+  ALTER TABLE "perpetual_grant"
+  ADD CONSTRAINT "unique_perpetual_grant"
+  UNIQUE("recording_u_i_d","recipient_key_fingerprint");

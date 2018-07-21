@@ -34,9 +34,7 @@ postRemoteTransfersR = do
   let settings = appSettings app
 
   existingTransfer <- runDB $ getBy $ UniqueRemoteTransfer (recordingUID req)
-  case isJust existingTransfer of
-    True -> invalidArgsI [MsgTransferForRecordingAlreadyExists]
-    False -> return ()
+  when (isJust existingTransfer) $ invalidArgsI [MsgTransferForRecordingAlreadyExists]
 
   request' <- parseRequest
               $ "POST https://www.googleapis.com/upload/storage/v1/b/"
@@ -48,8 +46,7 @@ postRemoteTransfersR = do
              $ appGoogleCloudAuthorizer app
              $ setQueryString [ ("uploadType", Just "resumable")
                               , ("name", Just . encodeUtf8 $ recordingUID req) ]
-             $ zeroRedirectCount
-             $ request'
+             $ zeroRedirectCount request'
 
   response <- liftIO . appHttpClient app $ request
 
@@ -61,26 +58,24 @@ postRemoteTransfersR = do
               $ headMay
               $ getResponseHeader "Location" response
 
-  _ <- fromMaybeM (error "Could not create the transfer: DB error")
-       $ runDB $ insertUnique
-       $ RemoteTransfer
-         (recordingUID req)
-         (recipientKeyFingerprint req)
-         (recordingNameCipher req)
-         (senderPublicKeyCipher req)
-         (senderNicknameCipher req)
-         (keyCipher req)
-         Nothing
-         now
 
-  -- Fire a push notification
-  devices <- runDB $ selectList [DeviceKeyFingerprint ==. recipientKeyFingerprint req] []
-  _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
-    outstandingGrantsCount <- countUnseenPlaybackGrants device
-    outstandingRecordingsCount <- countUnseenRecordings device
-    forkAndSendPushNotificationI
-      MsgNewRemoteRecordingReceived
-      (outstandingGrantsCount + outstandingRecordingsCount)
-      device
+  (maybeTransferID, deviceUnseenCounts) <- runDB $ do
+    maybeTransferID' <- insertUnique $ RemoteTransfer
+                        (recordingUID req)
+                        (recipientKeyFingerprint req)
+                        (recordingNameCipher req)
+                        (senderPublicKeyCipher req)
+                        (senderNicknameCipher req)
+                        (keyCipher req)
+                        Nothing
+                        now
+    deviceUnseenCounts' <- buildDeviceUnseenCounts $ recipientKeyFingerprint req
+    return (maybeTransferID', deviceUnseenCounts')
+
+  when (isNothing maybeTransferID) (error "Could not create the transfer: DB error")
+
+  -- Fire a push notification(s)
+  sequence_ $ flip map deviceUnseenCounts $ \(device, unseenCount) ->
+    forkAndSendPushNotificationI MsgNewRemoteRecordingReceived unseenCount device
 
   sendResponseStatus status200 $ object [ "uploadURL" .= decodeUtf8 location ]

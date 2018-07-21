@@ -18,14 +18,16 @@ instance FromJSON POSTRequest where
 postScreenCaptureDetectionsR :: Handler Value
 postScreenCaptureDetectionsR = do
   (POSTRequest keyFingerprint recordingUID) <- requireJsonBody
-  devices <- runDB $ selectList [DeviceKeyFingerprint ==. keyFingerprint] []
-  _ <- sequence $ (flip map) devices $ \(Entity _ device) -> do
-    let kf = deviceKeyFingerprint device
-    _ <- runDB $ insertUnique (ScreenCaptureDetection kf recordingUID)
-    outstandingGrantsCount <- countUnseenPlaybackGrants device
-    outstandingRecordingsCount <- countUnseenRecordings device
-    forkAndSendPushNotificationI
-      MsgScreenCaptureDetected
-      (max 1 (outstandingGrantsCount + outstandingRecordingsCount))
-      device
+
+  (detection', devicesAndUnseenCounts') <- runDB $ do
+    detection <- insertUnique (ScreenCaptureDetection keyFingerprint recordingUID)
+    devicesAndUnseenCounts <- buildDeviceUnseenCounts keyFingerprint
+    return (detection, devicesAndUnseenCounts)
+
+  when (isNothing detection')
+    $ $(logWarn) "Failed to insert screen capture detection, it probably already exists?"
+
+  sequence_ $ flip map devicesAndUnseenCounts' $ \(device, unseenCount) ->
+    forkAndSendPushNotificationI MsgScreenCaptureDetected (max 1 unseenCount) device
+
   sendResponseStatus status201 emptyResponse

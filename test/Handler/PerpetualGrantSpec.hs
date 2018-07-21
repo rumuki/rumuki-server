@@ -1,4 +1,4 @@
-module Handler.PlaybackGrantSpec where
+module Handler.PerpetualGrantSpec where
 
 import qualified Data.ByteString.Base64 as B64
 import           Data.HashMap.Strict    ((!))
@@ -10,43 +10,42 @@ import           TestImport
 spec :: Spec
 spec = withApp $ do
 
-  describe "getPlaybackGrantR" $ do
+  describe "getPerpetualGrantR" $ do
 
     it "returns the decryptable key cipher text" $ do
       device <- makeDevice
       (Entity gid originalGrant) <- makeGrant device id
       makeRequestWithGrantId gid
       responseSatisfies "has key cipher text" $ \(Object o) ->
-        let (Object grant) = o ! "playbackGrant"
+        let (Object grant) = o ! "perpetualGrant"
             (String ct) = grant ! "keyCipher"
             pubKey = (B64.decodeLenient . encodeUtf8) ct
         in H.member "keyCipher" grant &&
-           H.member "keyOffset" grant &&
-           pubKey == playbackGrantKeyCipher originalGrant
+           pubKey == perpetualGrantKeyCipher originalGrant
 
-    it "removes the grant thereafter" $ do
+    it "does not remove the grant thereafter" $ do
       (_, Entity gid _) <- makeRequest
       statusIs 200
       mGrant <- runDB $ DB.get gid
-      boolIsTrue "grant has been removed" $ isNothing mGrant
+      boolIsTrue "grant still exists" $ isJust mGrant
 
-    it "second request fails" $ do
+    it "second request succeeds" $ do
       (_, (Entity gid _)) <- makeRequest
       statusIs 200
       makeRequestWithGrantId gid
-      statusIs 404
+      statusIs 200
 
     it "does not return any expired grants" $ do
       aMinuteAgo <- liftIO $ addUTCTime (-60) <$> getCurrentTime
       device <- makeDevice
-      (Entity gid _) <- makeGrant device $ \g -> g { playbackGrantExpires = aMinuteAgo }
+      (Entity gid _) <- makeGrant device $ \g -> g { perpetualGrantExpires = aMinuteAgo }
       makeRequestWithGrantId gid
       statusIs 404
 
     it "does not succeed with a mismatched recording id" $ do
       device <- makeDevice
       (Entity gid _) <- makeGrant device $
-        \g -> g { playbackGrantRecordingUID = "notrecording123" }
+        \g -> g { perpetualGrantRecordingUID = "notrecording123" }
       makeRequestWithGrantId gid
       statusIs 404
 
@@ -56,11 +55,11 @@ spec = withApp $ do
       makeDevice = runDB $ retrieve $ factoryDevice id
 
       makeGrant device transform = do
-        runDB $ factoryPlaybackGrant device $ \g ->
-          transform g { playbackGrantRecordingUID = recordingUID }
+        runDB $ factoryPerpetualGrant device $ \g ->
+          transform g { perpetualGrantRecordingUID = recordingUID }
 
       makeRequestWithGrantId gid = requestJSON $ do
-        setUrl (PlaybackGrantR recordingUID gid)
+        setUrl (PerpetualGrantR recordingUID gid)
         setMethod "GET"
 
       makeRequest = do
