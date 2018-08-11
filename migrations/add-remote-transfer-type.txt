@@ -1,0 +1,15 @@
+Depends: add-model-remote-transfer
+Apply: |
+  ALTER TABLE "remote_transfer"
+  ADD COLUMN "type"
+  VARCHAR
+  DEFAULT 'Video'
+  NOT NULL;
+
+  UPDATE "remote_transfer"
+  SET type = 'Video'
+  WHERE type IS NULL;
+
+  ALTER TABLE "remote_transfer"
+  ALTER COLUMN "type"
+  DROP DEFAULT;
