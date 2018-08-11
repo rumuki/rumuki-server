@@ -38,6 +38,7 @@ library
                      Model.Extension
                      Model.PlaybackGrant
                      Model.RemoteTransfer
+                     Model.RemoteTransferType
                      Model.PerpetualGrant
                      Model.PushNotification
                      Model.Subscriber

@@ -68,6 +68,7 @@ postRemoteTransfersR = do
                         (senderNicknameCipher req)
                         (keyCipher req)
                         Nothing
+                        Video
                         now
     deviceUnseenCounts' <- buildDeviceUnseenCounts $ recipientKeyFingerprint req
     return (maybeTransferID', deviceUnseenCounts')

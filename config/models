@@ -63,6 +63,7 @@ RemoteTransfer
   senderNicknameCipher ByteString
   keyCipher ByteString
   seen UTCTime Maybe
+  type RemoteTransferType
   created UTCTime default=now()
   UniqueRemoteTransfer recordingUID
  deriving Show
