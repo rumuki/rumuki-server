@@ -55,7 +55,7 @@ getPlaybackGrantsR recordingUid = do
 
   sendResponseStatus status200 $ object [ "playbackGrants" .= grants ]
 
-data DELETERequest =
+newtype DELETERequest =
   DELETERequest { deleteRequestRecipientKeyFingerprint :: ByteString }
 
 instance FromJSON DELETERequest where

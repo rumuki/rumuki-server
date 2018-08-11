@@ -231,19 +231,21 @@ removeStaleObjects app = runSqlPool executeRemoval (appConnPool app)
 -- | For yesod devel, return the Warp settings and WAI Application.
 getApplicationDev :: IO (Settings, Application)
 getApplicationDev = do
-  settings <- getAppSettings
-  foundation <- makeFoundation settings
-  wsettings <- getDevSettings $ warpSettings foundation
-  app <- makeApplication foundation
+  (_, wsettings, app) <- getApplicationPrerequisites
   return (wsettings, app)
 
 getApplicationRepl :: IO (Int, App, Application)
 getApplicationRepl = do
+  (foundation, wsettings, app) <- getApplicationPrerequisites
+  return (getPort wsettings, foundation, app)
+
+getApplicationPrerequisites :: IO (App, Settings, Application)
+getApplicationPrerequisites = do
   settings <- getAppSettings
   foundation <- makeFoundation settings
   wsettings <- getDevSettings $ warpSettings foundation
-  app1 <- makeApplication foundation
-  return (getPort wsettings, foundation, app1)
+  app <- makeApplication foundation
+  return (foundation, wsettings, app)
 
 shutdownApp :: App -> IO ()
 shutdownApp _ = return ()

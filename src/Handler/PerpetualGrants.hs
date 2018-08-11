@@ -49,7 +49,7 @@ getPerpetualGrantsR recordingUid = do
                                , PerpetualGrantExpires >. now ] []
   sendResponseStatus status200 $ object [ "perpetualGrants" .= grants ]
 
-data DELETERequest =
+newtype DELETERequest =
   DELETERequest { deleteRequestRecipientKeyFingerprint :: ByteString
                 }
 
