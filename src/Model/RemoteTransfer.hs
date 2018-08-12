@@ -18,6 +18,7 @@ instance ToJSON RemoteTransfer where
     , "senderPublicKeyCipher" .= remoteTransferSenderPublicKeyCipher t
     , "senderNicknameCipher"  .= remoteTransferSenderNicknameCipher t
     , "keyCipher"             .= remoteTransferKeyCipher t
+    , "type"                  .= remoteTransferType t
     , "created"               .= remoteTransferCreated t ]
 
 data RemoteTransferView = RemoteTransferView

@@ -1,6 +1,7 @@
 module Handler.RemoteTransferSpec
        (spec) where
 
+import           Data.HashMap.Strict          ((!))
 import           Network.HTTP.Client.Internal (Response (..))
 import           Network.HTTP.Types           (status404)
 import           TestImport
@@ -22,6 +23,10 @@ testGet = do
         setUrl $ RemoteTransferR $ remoteTransferRecordingUID t
         setMethod "GET"
       statusIs 200
+      responseSatisfies "has expected metadata" $ \(Object o) ->
+        let (Object r) = o ! "remoteTransfer"
+            (String transferType) = r ! "type"
+        in transferType == "video"
 
     it "updates the seen status of the remote transfer" $ do
       Entity _ t <- runDB $ factoryRemoteTransfer id

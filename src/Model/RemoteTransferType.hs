@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Model.RemoteTransferType where
 
@@ -15,3 +16,7 @@ instance FromJSON RemoteTransferType where
     "album" -> return Album
     "video" -> return Video
     _ -> fail "remote transfer type must be one of 'album' or 'video'"
+
+instance ToJSON RemoteTransferType where
+  toJSON Video = String "video"
+  toJSON Album = String "album"
