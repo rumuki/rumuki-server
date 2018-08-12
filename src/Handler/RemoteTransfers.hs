@@ -1,6 +1,6 @@
 module Handler.RemoteTransfers where
 
-import           Data.Aeson             (withObject)
+import           Data.Aeson             (withObject, (.:?))
 import           Data.Time.Clock
 import           Import
 import           Model.Device
@@ -14,6 +14,7 @@ data POSTRemoteTransfersRequest =
                              , senderPublicKeyCipher :: ByteString
                              , senderNicknameCipher :: ByteString
                              , keyCipher :: ByteString
+                             , transferType :: Maybe RemoteTransferType
                              }
 
 instance FromJSON POSTRemoteTransfersRequest where
@@ -25,6 +26,7 @@ instance FromJSON POSTRemoteTransfersRequest where
     <*> o .: "senderPublicKeyCipher"
     <*> o .: "senderNicknameCipher"
     <*> o .: "keyCipher"
+    <*> o .:? "type"
 
 postRemoteTransfersR :: Handler Value
 postRemoteTransfersR = do
@@ -68,7 +70,7 @@ postRemoteTransfersR = do
                         (senderNicknameCipher req)
                         (keyCipher req)
                         Nothing
-                        Video
+                        (fromMaybe Video (transferType req))
                         now
     deviceUnseenCounts' <- buildDeviceUnseenCounts $ recipientKeyFingerprint req
     return (maybeTransferID', deviceUnseenCounts')

@@ -24,8 +24,34 @@ testPost = describe "postRemoteTransfers" $ do
     makeRequest
     statusIs 400
 
+  it "defaults to video transfers" $ do
+    makeRequest
+    statusIs 200
+    mtransfer <- runDB $ selectFirst [] [] :: YesodExample App (Maybe (Entity RemoteTransfer))
+    assertEq "Transfer is found" True $ isJust mtransfer
+    assertEq "Transfer is video" (Just Video) $ remoteTransferType . entityVal <$> mtransfer
+
+  it "can accept album as the transfer type" $ do
+    requestJSON $ do
+      setUrl RemoteTransfersR
+      setMethod "POST"
+      setRequestBody $ encode $
+        object [ "recordingUID"               .= (recordingUID :: Text)
+               , "recipientKeyFingerprint"    .= ("recipientkeyfingerprint" :: ByteString)
+               , "recordingNameCipher"        .= ("recordingnameciphertext" :: ByteString)
+               , "senderPublicKeyCipher"      .= ("senderpublickeycipher" :: ByteString)
+               , "senderNicknameCipher"       .= ("sendernicknamecipher" :: ByteString)
+               , "keyCipher"                  .= ("keycipher" :: ByteString)
+               , "type"                       .= ("album" :: Text)]
+
+    statusIs 200
+    mtransfer <- runDB $ selectFirst [] [] :: YesodExample App (Maybe (Entity RemoteTransfer))
+    assertEq "Transfer is found" True $ isJust mtransfer
+    assertEq "Transfer is album" (Just Album) $ remoteTransferType . entityVal <$> mtransfer
+
   where
     recordingUID = "recording123"
+
     makeRequest = requestJSON $ do
       setUrl RemoteTransfersR
       setMethod "POST"
