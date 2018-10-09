@@ -9,19 +9,26 @@ import           Model.RemoteTransfer (RemoteTransferView (..),
                                        remoteTransferObjectURL,
                                        remoteTransferPublicURL)
 
-data POSTRequest = POSTRequest [Text] ByteString
+data POSTRequest = POSTRequest { recordingUIDs :: [Text]
+                               , recipientKeyFingerprint :: ByteString
+                               , avoidMarkAsSeen :: Bool
+                               }
 
 instance FromJSON POSTRequest where
   parseJSON = withObject "device update request" $ \o ->
     POSTRequest
     <$> o .: "recordingUIDs"
     <*> o .: "deviceKeyFingerprint"
+    <*> o .:? "avoidMarkAsSeen" .!= False
 
 postDeviceUpdateR :: Handler Value
 postDeviceUpdateR = do
   settings <- appSettings <$> getYesod
   now <- liftIO getCurrentTime
-  POSTRequest uids' keyFingerprint <- requireJsonBody
+  req <- requireJsonBody
+  let uids' = recordingUIDs req
+  let keyFingerprint = recipientKeyFingerprint req
+  let markAsSeen = avoidMarkAsSeen req == False
 
   -- Update the last updated value on the device:
   maybeDevice <- runDB $ selectFirst [ DeviceKeyFingerprint ==. keyFingerprint ] []
@@ -41,9 +48,11 @@ postDeviceUpdateR = do
   perpetualGrants <- runDB $ selectList [PerpetualGrantRecordingUID <-. uids, PerpetualGrantExpires >. now] []
 
   -- Update the seen property of each of the remote transfers:
-  traverse_
-    (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])
-    (filter (isNothing . remoteTransferSeen . entityVal) transfers)
+  if markAsSeen
+    then traverse_
+         (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])
+         (filter (isNothing . remoteTransferSeen . entityVal) transfers)
+    else return ()
 
   transferViews <- forM transfers $ \(Entity _ t) -> do
     let url = remoteTransferPublicURL t settings

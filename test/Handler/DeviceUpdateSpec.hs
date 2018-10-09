@@ -108,6 +108,14 @@ spec = do
         unseenRemoteTransfers <- runDB $ selectList  [ RemoteTransferSeen ==. Nothing ] []
         assertEq "All remote transfers are now seen" 0 (length unseenRemoteTransfers)
 
+      it "does not set the seen property if avoidMarkAsSeen is passed as true" $ do
+        device <- makeDevice
+        _ <- makeRemoteTransfer device
+        makeRequestAvoidMarkAsSeen device
+        statusIs 200
+        unseenRemoteTransfers <- runDB $ selectList  [ RemoteTransferSeen ==. Nothing ] []
+        assertEq "All remote transfers are now seen" 1 (length unseenRemoteTransfers)
+
       it "sets the downloadURL on the remote transfer" $ do
         device <- makeDevice
         _ <- makeRemoteTransfer device
@@ -139,11 +147,20 @@ spec = do
     makePlaybackGrant device = runDB $ factoryPlaybackGrant device $ \g -> g { playbackGrantRecordingUID = recordingUID }
     makeRemoteTransfer (Entity _ d) = runDB $ factoryRemoteTransfer
       $ \t -> t { remoteTransferRecipientKeyFingerprint = deviceKeyFingerprint d }
+
     makeRequest (Entity _ d) = requestJSON $ do
       setUrl $ DeviceUpdateR
       setMethod "POST"
       setRequestBody $ encode $ object [ "recordingUIDs" .= ([recordingUID] :: [Text])
                                        , "deviceKeyFingerprint" .= deviceKeyFingerprint d ]
+
+    makeRequestAvoidMarkAsSeen (Entity _ d) = requestJSON $ do
+      setUrl $ DeviceUpdateR
+      setMethod "POST"
+      setRequestBody $ encode $ object [ "recordingUIDs" .= ([recordingUID] :: [Text])
+                                       , "deviceKeyFingerprint" .= deviceKeyFingerprint d
+                                       , "avoidMarkAsSeen" .= True ]
+
     parseDownloadURL :: Value -> Parser Text
     parseDownloadURL = withObject "response" $ \o -> do
       transfers <- o .: "remoteTransfers"
