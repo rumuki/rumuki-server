@@ -21,6 +21,7 @@ library
                      Handler.Feedback
                      Handler.Health
                      Handler.Home
+                     Handler.MarkAsSeen
                      Handler.RemoteTransfer
                      Handler.RemoteTransfers
                      Handler.PlaybackGrant
@@ -168,7 +169,8 @@ test-suite test
                 TypeFamilies
                 ViewPatterns
 
-    other-modules: Handler.PlaybackGrantSpec
+    other-modules: Handler.MarkAsSeenSpec
+                 , Handler.PlaybackGrantSpec
                  , Handler.PlaybackGrantsSpec
                  , Handler.PerpetualGrantSpec
                  , Handler.PerpetualGrantsSpec

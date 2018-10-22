@@ -30,6 +30,7 @@ import           Handler.DeviceUpdate
 import           Handler.Feedback
 import           Handler.Health
 import           Handler.Home
+import           Handler.MarkAsSeen
 import           Handler.PerpetualGrant
 import           Handler.PerpetualGrants
 import           Handler.PlaybackGrant

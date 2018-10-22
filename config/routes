@@ -2,6 +2,7 @@
 
 /api/device DevicesR POST DELETE
 /api/device/update DeviceUpdateR POST
+/api/mark-as-seen MarkAsSeenR POST
 /api/feedback FeedbackR POST
 /api/health HealthR GET
 /api/healthz HealthzR GET
