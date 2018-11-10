@@ -28,7 +28,7 @@ postDeviceUpdateR = do
   req <- requireJsonBody
   let uids' = recordingUIDs req
   let keyFingerprint = recipientKeyFingerprint req
-  let markAsSeen = avoidMarkAsSeen req == False
+  let markAsSeen = not (avoidMarkAsSeen req)
 
   -- Update the last updated value on the device:
   maybeDevice <- runDB $ selectFirst [ DeviceKeyFingerprint ==. keyFingerprint ] []
@@ -48,11 +48,10 @@ postDeviceUpdateR = do
   perpetualGrants <- runDB $ selectList [PerpetualGrantRecordingUID <-. uids, PerpetualGrantExpires >. now] []
 
   -- Update the seen property of each of the remote transfers:
-  if markAsSeen
-    then traverse_
-         (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])
-         (filter (isNothing . remoteTransferSeen . entityVal) transfers)
-    else return ()
+  when markAsSeen $
+    traverse_
+    (\t -> runDB $ update (entityKey t) [RemoteTransferSeen =. Just now])
+    (filter (isNothing . remoteTransferSeen . entityVal) transfers)
 
   transferViews <- forM transfers $ \(Entity _ t) -> do
     let url = remoteTransferPublicURL t settings
